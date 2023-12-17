@@ -129,6 +129,29 @@ This section pertains to `config.json` and the settings which can be set in it. 
     "ignore_comments": true
     ```
 
+# wdmap.json
+
+This file is the mapping of unicode codepoints for Wingdings characters to readable characters. It is laid out like this:
+
+```json
+{
+    "unicode_to_char_map": {
+        "264b": "a",
+        ...
+        "d8d3+de70": "j",
+        ...
+    }
+}
+```
+
+Under the `unicode_to_char_map` object, each key is a 4-digit hexadecimal unicode codepoint representing a given Wingdings character, and its value is what the Wingdings character should be replaced with. In the example, unicode codepoint 264b will be translated to a lowercase `a`.
+
+For characters that require surrogate pairs, you can represent this in the codepoint key by separating the high and low surrogate codepoints with a `+` symbol, as demonstrated in the `j` example above.
+
+Variation selectors should be omitted from `wdmap.json` definitions. The reasoning is that the bot will strip the variation selector characters from Reddit content before evaluation, as they interfere with character detection and replacement since they are technically different characters.
+
+If desired, `wdmap.json` can be updated for translating additional character sets or the general substitution of characters in text, if someone wanted to use the bot in this way. It's not limited to Wingdings despite Wingdings translation being its purpose.
+
 # ☜︎☠︎❄︎☼︎✡︎ ☠︎🕆︎💣︎👌︎☜︎☼︎ 💧︎☜︎✞︎☜︎☠︎❄︎☜︎☜︎☠︎
 
 👎︎✌︎☼︎😐︎ 👎︎✌︎☼︎😐︎☜︎☼︎ ✡︎☜︎❄︎ 👎︎✌︎☼︎😐︎☜︎☼︎
