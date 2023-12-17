@@ -2,7 +2,7 @@
     "subreddits": [
         
     ],
-    "log_level": "debug",
+    "log_level": "info",
     "overwrite_log": true,
     "wd_detect_threshold": 5,
     "skip_existing_on_start": true,
