@@ -12,7 +12,7 @@ Well, I can't fix your broken friends (they took my certification away for that)
 
 The **Doctor Professor's Handy Translator** is a bot written in Python to monitor Reddit submissions and comments and translate any Wingdings discovered to reabable text.
 
-While this project does focus on translating unicode "Wingdings", technically it can also be used subsubstitute any configured unicode codepoints and translate them to other characters.
+While this project does focus on translating unicode "Wingdings", technically it can also be used to substitute any configured unicode codepoints and translate them to other characters.
 
 This may be useful to Undertale and Deltarune centric communities due to the use of Wingdings in their lore.
 
