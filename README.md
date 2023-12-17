@@ -135,7 +135,7 @@ This section pertains to `config.json` and the settings which can be set in it. 
 
 > For a more in-depth explanation of surrogate pairs and variation selectors, [review this article](https://learn.microsoft.com/en-us/globalization/encoding/surrogate-pairs).
 
-This file is the mapping of unicode codepoints for Wingdings characters to readable characters. It is laid out like this:
+[`wdmap.json`](./wdmap.json) is the mapping of unicode codepoints for Wingdings characters to readable characters. It is laid out like this:
 
 ```json
 {
