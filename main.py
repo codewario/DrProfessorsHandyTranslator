@@ -117,6 +117,12 @@ def main():
     ignore_submissions = data['ignore_submissions'] if 'ignore_submissions' in data else False
     ignore_comments = data['ignore_comments'] if 'ignore_comments' in data else False
 
+    reply_footer = '''
+^(This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
+
+^(Issues? Report a problem on the) [^(issue tracker)](https://github.com/codewario/DrProfessorsHandyTranslator/issues)^.
+'''
+
     # array of subreddits to monitor
     subreddits_list = data['subreddits'] if 'subreddits' in data else None
 
@@ -211,6 +217,10 @@ Wingdings translation from the [above post]({subm_shortlink})
 # Title: {t_title}
 
 {t_text}
+
+---
+
+{reply_footer}
     """
 
                         # Post the reply comment
@@ -256,6 +266,10 @@ Wingdings translation from the [above comment]({comm_link})
 ---
 
 {t_text}
+
+---
+
+{reply_footer}
 """
 
                         # Post the reply comment
