@@ -46,7 +46,7 @@ Included in this repo is a systemd service template, [`dpht.service-template`](.
 
 Example `dpht.service` which uses a venv'd Python instance:
 
-```json
+```ini
 [Unit]
 Description=Doctor Professor's Handy Translator
 After=network.target
