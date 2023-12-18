@@ -18,7 +18,7 @@ This may be useful to Undertale and Deltarune centric communities due to the use
 
 # Requirements
 
-This bot requires Python 3.11 or later to run.
+This bot requires Python 3.9 or later to run. May run on some earlier versions of 3.x but this is untested.
 
 The only third party package required is `praw`, which can be installed using `pip install praw`.
 
