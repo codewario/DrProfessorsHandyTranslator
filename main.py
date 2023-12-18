@@ -15,19 +15,20 @@ def init_logging(data):
     log_level = log.INFO
     if 'log_level' in data:
         
-        match data['log_level'].lower():
-            case 'debug':
-                log_level = log.DEBUG
-            case 'info':
-                log_level = log.INFO
-            case 'warning':
-                log_level = log.WARNING
-            case 'error':
-                log_level = log.ERROR
-            case 'critical':
-                log_level = log.CRITICAL
-            case _:
-                raise RuntimeError(f"Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values")
+        ll_val = data['log_level']
+
+        if ll_val == 'debug':
+            log_level = log.DEBUG
+        elif ll_val == 'info':
+            log_level = log.INFO
+        elif ll_val == 'warning':
+            log_level = log.WARNING
+        elif ll_val == 'error':
+            log_level = log.ERROR
+        elif ll_val == 'critical':
+            log_level = log.CRITICAL
+        else:
+            raise RuntimeError(f"Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values")
 
     log.basicConfig(
         filename = 'dpht.log',
