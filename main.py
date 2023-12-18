@@ -5,10 +5,11 @@ import logging as log
 import os
 from time import sleep
 
-# path variables
+# global variables
 script_dir = os.path.dirname(os.path.realpath(__file__))
 config_json_path = os.path.join(script_dir, 'config.json')
 wdmap_json_path = os.path.join(script_dir, 'wdmap.json')
+md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 
 # functions
 def init_logging(data):
@@ -37,6 +38,13 @@ def init_logging(data):
         level = log_level,
         format = '%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
     )
+
+# TODO: Not quite working yet
+def escape_md(text):
+    escaped = text
+    for char in md_reserved_syntax:
+        escaped = escaped.replace(char, f"\{char}")
+    return escaped
 
 def render_wd_map_code(mapcode, as_byte_string = False):
     render = ''
@@ -69,7 +77,6 @@ def translate_text(text, charmap, flags=0, vs_chars=['\ufe0e', '\ufe0f']):
     
     # replace characters as mapped
     for char in charmap:
-        # repl = render_wd_map_code(char)
         translated = translated.replace(char, charmap[char])
     return translated
 
@@ -228,7 +235,7 @@ Wingdings translation from the [above post]({subm_shortlink})
                         log.debug('Sending translation as reply')
                         result = submission.reply(reply)
                         if distinguish_reply:
-                            result.mod.distinughish(sticky = sticky_reply)
+                            result.mod.distinguish(sticky = sticky_reply)
             else:
                 log.debug('Ignoring submissions per configuration')
 
