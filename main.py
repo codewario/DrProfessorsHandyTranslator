@@ -282,15 +282,15 @@ Wingdings translation from the [above post]({subm_shortlink})
                             log.debug('Translating comment')
                             t_text = translate_text(comm_body, charmap)
                             reply = f"""
-    Wingdings translation from the [above comment]({comm_link})
+Wingdings translation from the [above comment]({comm_link})
 
-    ---
+---
 
-    {t_text}
+{t_text}
 
-    ---
+---
 
-    {reply_footer}
+{reply_footer}
     """
 
                             # Post the reply comment
