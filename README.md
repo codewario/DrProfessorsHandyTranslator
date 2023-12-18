@@ -43,6 +43,7 @@ Included in this repo is a systemd service template, [`dpht.service-template`](.
       - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
       - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
       - In either situation above, `main.py` still needs to be the second parameter (else it will just start the interactive interpreter).
+3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart`)
 
 Example `dpht.service` which uses a venv'd Python instance:
 
