@@ -26,16 +26,16 @@ The only third party package required is `praw`, which can be installed using `p
 
 If you want to run this in a Python venv, make sure it is created and activated before going through the steps below:
 
-1. Make sure `praw` is installed `pip install praw`
-2. Copy `example.ini` to `praw.ini`. Read the [PRAW.INI documentation](https://praw.readthedocs.io/en/stable/getting_started/configuration/prawini.html) to understand how to configure the PRAW client settings.
-3. Copy `config-example.json` to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
+1. Make sure `praw` is installed: `pip install praw`
+2. Copy [`example.ini`](./example.ini) to `praw.ini`. Read the [PRAW.INI documentation](https://praw.readthedocs.io/en/stable/getting_started/configuration/prawini.html) to understand how to configure the PRAW client settings.
+3. Copy [`config-example.json`](./config-example.json) to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
 4. Assuming you are in this folder, run the bot with `python main.py`
 
 ## Install as a service
 
 Included in this repo is a systemd service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a systemd service with the following steps:
 
-1. Copy `dpht-template.service` to `/etc/systemd/system/dpht.service`
+1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
    - `User`: This should be the username you want the bot to run as on the local system.
    - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
@@ -43,7 +43,7 @@ Included in this repo is a systemd service template, [`dpht.service-template`](.
       - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
       - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
       - In either situation above, `main.py` still needs to be the second parameter (else it will just start the interactive interpreter).
-3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart`)
+3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart|status`)
 
 Example `dpht.service` which uses a venv'd Python instance:
 
@@ -67,7 +67,7 @@ WantedBy=multi-user.target
 
 # Configuration Settings
 
-This section pertains to `config.json` and the settings which can be set in it. `config.json` differs from `praw.ini` as `praw.ini` is for the Reddit client settings itself, while `config.json` deals with bot-specific behavior.
+This section pertains to [`config.json`](./config-example.json) and the settings which can be set in it. `config.json` differs from [`praw.ini`](./example.ini) as `praw.ini` is for the Reddit client settings itself, while `config.json` deals with bot-specific behavior.
 
 - `subreddits`
     - Required. An array of subreddits to monitor
