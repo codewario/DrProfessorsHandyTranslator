@@ -31,6 +31,39 @@ If you want to run this in a Python venv, make sure it is created and activated 
 3. Copy `config-example.json` to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
 4. Assuming you are in this folder, run the bot with `python main.py`
 
+## Install as a service
+
+Included in this repo is a systemd service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a systemd service with the following steps:
+
+1. Copy `dpht-template.service` to `/etc/systemd/system/dpht.service`
+2. Edit the following fields in `dpht.service`:
+   - `User`: This should be the username you want the bot to run as on the local system.
+   - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
+   - `ExecStart`: Change the path to the `python` executable in this field in the following situations:
+      - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
+      - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
+      - In either situation above, `main.py` still needs to be the second parameter (else it will just start the interactive interpreter).
+
+Example `dpht.service` which uses a venv'd Python instance:
+
+```json
+[Unit]
+Description=Doctor Professor's Handy Translator
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=1
+User=codewario
+WorkingDirectory=/home/codewario/src/dpht
+ExecStart=/home/codewario/src/dpht/venv/bin/python main.py
+
+[Install]
+WantedBy=multi-user.target
+```
+
 # Configuration Settings
 
 This section pertains to `config.json` and the settings which can be set in it. `config.json` differs from `praw.ini` as `praw.ini` is for the Reddit client settings itself, while `config.json` deals with bot-specific behavior.
