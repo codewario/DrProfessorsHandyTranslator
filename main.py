@@ -182,7 +182,7 @@ def main():
         # each property reference results in an API call, so store what we can in variables
         # to reduce usage
         for subreddit in subreddits:
-            subr_url = subreddit.url
+            subr_url = subreddit.url if monitor_mode != 'multi' else '+'.join(subreddits_list)
             subr_index = subreddits.index(subreddit)
 
             if not ignore_submissions:
