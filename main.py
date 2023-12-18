@@ -238,11 +238,12 @@ Wingdings translation from the [above post]({subm_shortlink})
                             log.debug('Sending translation as reply')
                             try:
                                 result = submission.reply(reply)
+                                r_link = result.permalink
                                 if distinguish_reply:
                                     try:
                                         result.mod.distinguish(sticky = sticky_reply)
-                                    except prawexceptions.Forbidden as e:
-                                        log.warning(f"No permission to distinguish {result.permalink}: {e}")
+                                    except prawexceptions.PrawcoreException as e2:
+                                        log.warning(f"Failed to distinguish {r_link}: {e}")
                             except prawexceptions.PrawcoreException as e:
                                 log.error(f"Unable to reply to {subm_shortlink} with translation: {e}")
                     except Exception as e:
@@ -296,7 +297,13 @@ Wingdings translation from the [above comment]({comm_link})
                             # Post the reply comment
                             log.debug('Sending translation as reply')
                             try:
-                                comment.reply(reply)
+                                result = comment.reply(reply)
+                                r_link = result.shortlink
+                                if distinguish_reply:
+                                    try:
+                                        result.mod.distinguish()
+                                    except prawexceptions.PrawcoreException as e:
+                                        log.warning(f"Failed to distinguish {r_link}: {e}")
                             except prawexceptions.PrawcoreException as e:
                                 log.error(f"Unable to reply to {comm_link} with translation: {e}")
                     except Exception as e:
