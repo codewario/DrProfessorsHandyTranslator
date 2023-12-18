@@ -1,4 +1,5 @@
 import praw
+from prawcore import exceptions as prawexceptions
 import re
 import json
 import logging as log
@@ -198,26 +199,28 @@ def main():
                     if submission is None:
                         break
                     found_new = True
-                    subm_id = submission.id
-                    subm_title = remove_vs_chars(submission.title)
-                    subm_text = remove_vs_chars(submission.selftext)
-                    subm_shortlink = submission.shortlink
-                    
-                    log.debug(f"Checking new submission: {subm_shortlink}")
 
-                    # if we haven't replied and wingdings are present in the title or body
-                    if wd_regex.search(subm_title) or wd_regex.search(subm_text):
+                    try:
+                        subm_id = submission.id
+                        subm_title = remove_vs_chars(submission.title)
+                        subm_text = remove_vs_chars(submission.selftext)
+                        subm_shortlink = submission.shortlink
+                        
+                        log.debug(f"Checking new submission: {subm_shortlink}")
 
-                        log.info(f"Translating Wingdings in {subr_url} post id {subm_id}: {subm_shortlink}")
+                        # if we haven't replied and wingdings are present in the title or body
+                        if wd_regex.search(subm_title) or wd_regex.search(subm_text):
 
-                        # Translate detected wingdings here
-                        # Comment reply should include original title and body with translated text replacing the wingdings
-                        log.debug('Translating title')
-                        t_title = translate_text(subm_title, charmap)
-                        log.debug('Translating text')
-                        t_text = translate_text(subm_text, charmap)
+                            log.info(f"Translating Wingdings in {subr_url} post id {subm_id}: {subm_shortlink}")
 
-                        reply = f"""
+                            # Translate detected wingdings here
+                            # Comment reply should include original title and body with translated text replacing the wingdings
+                            log.debug('Translating title')
+                            t_title = translate_text(subm_title, charmap)
+                            log.debug('Translating text')
+                            t_text = translate_text(subm_text, charmap)
+
+                            reply = f"""
 Wingdings translation from the [above post]({subm_shortlink})
 
 ---
@@ -231,11 +234,19 @@ Wingdings translation from the [above post]({subm_shortlink})
 {reply_footer}
     """
 
-                        # Post the reply comment
-                        log.debug('Sending translation as reply')
-                        result = submission.reply(reply)
-                        if distinguish_reply:
-                            result.mod.distinguish(sticky = sticky_reply)
+                            # Post the reply comment
+                            log.debug('Sending translation as reply')
+                            try:
+                                result = submission.reply(reply)
+                                if distinguish_reply:
+                                    try:
+                                        result.mod.distinguish(sticky = sticky_reply)
+                                    except prawexceptions.Forbidden as e:
+                                        log.warning(f"No permission to distinguish {result.permalink}: {e}")
+                            except prawexceptions.PrawcoreException as e:
+                                log.error(f"Unable to reply to {subm_shortlink} with translation: {e}")
+                    except Exception as e:
+                        log.error('An error occurred while checking submissions: %s', e)
             else:
                 log.debug('Ignoring submissions per configuration')
 
@@ -253,36 +264,43 @@ Wingdings translation from the [above post]({subm_shortlink})
                     if comment is None:
                         break
                     found_new = True
-                    comm_id = comment.id
-                    comm_body = remove_vs_chars(comment.body)
-                    comm_link = comment.permalink
 
-                    log.debug(f"Checking new comment: {comm_link}")
+                    try:
+                        comm_id = comment.id
+                        comm_body = remove_vs_chars(comment.body)
+                        comm_link = comment.permalink
 
-                    # if we haven't replied and wingdings are present in the body
-                    if wd_regex.search(comm_body):
+                        log.debug(f"Checking new comment: {comm_link}")
 
-                        log.info(f"Translating Wingdings in comment id {comm_id}: {comm_link}")
+                        # if we haven't replied and wingdings are present in the body
+                        if wd_regex.search(comm_body):
 
-                        # Translate detected wingdings here
-                        # Comment reply should include original body translated text replacing the wingdings
-                        log.debug('Translating comment')
-                        t_text = translate_text(comm_body, charmap)
-                        reply = f"""
-Wingdings translation from the [above comment]({comm_link})
+                            log.info(f"Translating Wingdings in comment id {comm_id}: {comm_link}")
 
----
+                            # Translate detected wingdings here
+                            # Comment reply should include original body translated text replacing the wingdings
+                            log.debug('Translating comment')
+                            t_text = translate_text(comm_body, charmap)
+                            reply = f"""
+    Wingdings translation from the [above comment]({comm_link})
 
-{t_text}
+    ---
 
----
+    {t_text}
 
-{reply_footer}
-"""
+    ---
 
-                        # Post the reply comment
-                        log.debug('Sending translation as reply')
-                        comment.reply(reply)
+    {reply_footer}
+    """
+
+                            # Post the reply comment
+                            log.debug('Sending translation as reply')
+                            try:
+                                comment.reply(reply)
+                            except prawexceptions.PrawcoreException as e:
+                                log.error(f"Unable to reply to {comm_link} with translation: {e}")
+                    except Exception as e:
+                        log.error('An error occurred while checking comments: %s', e)
             else:
                 log.debug('Ignoring comments per configuration')
 
