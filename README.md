@@ -102,6 +102,7 @@ This section pertains to `config.json` and the settings which can be set in it. 
 - `distinguish_reply`
     - Set to `true` if the translation comment should be mod-distinguished. Requires the bot-user to be a mod of that sub when replying.
     - Default value: `false`
+    - Mod permission: `Manage Posts and Comments`
     - Example:
     ```json
     "distinguish_reply": true
@@ -110,6 +111,7 @@ This section pertains to `config.json` and the settings which can be set in it. 
 - `sticky_reply`
     - Set to `true` if the translation comment should be stickied. Only has an effect if `distinguish_reply` is `true` and the reply is to a post (as opposed to replying to a comment).
     - Default value: `false`
+    - Mod permission: `Manage Posts and Comments`
     - Example:
     ```json
     "sticky_reply": true
