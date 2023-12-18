@@ -2,7 +2,7 @@
 
 ![Room 264](https://static.wikia.nocookie.net/undertale/images/d/dd/Room_264_screenshot.gif)
 
-Have your friends *just* discovered the internet, only to be corrupted by some abominable force of darkness and suddenly they start spewing *this* crapola?
+Have your friends *just* discovered the front page of the internet, only to be corrupted by some abominable force of darkness and suddenly they start spewing *this* crapola?
 
 Well, I can't fix your broken friends (they took my certification away for that), but I *can* fix your ability to understand them beyond recognition! (litigation pending)
 
@@ -10,7 +10,7 @@ Well, I can't fix your broken friends (they took my certification away for that)
 
 ---
 
-The **Doctor Professor's Handy Translator** is a bot written in Python to monitor Reddit submissions and comments and translate any Wingdings discovered to reabable text.
+The **Doctor Professor's Handy Translator** is a bot written in Python to monitor Reddit submissions and comments and translate any Wingdings discovered to readable text.
 
 While this project does focus on translating unicode "Wingdings", technically it can also be used to substitute any configured unicode codepoints and translate them to other characters.
 
