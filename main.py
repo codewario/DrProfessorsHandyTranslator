@@ -14,7 +14,12 @@ config_json_path = os.path.join(script_dir, 'config.json')
 wdmap_json_path = os.path.join(script_dir, 'wdmap.json')
 md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 reddit_site = 'https://www.reddit.com'
+hup_received = False
 exit_signaled = False
+
+# load these later
+data = None
+wdmap = None
 
 
 def init_logging(data):
@@ -48,23 +53,23 @@ def init_logging(data):
 
 
 def signal_handler(signum, frame):
+    global exit_signaled
+    global hup_received
+
     # not much to do on cleanup but we do want to log the received signal
     message = None
     if signum == signal.SIGTERM:
         message = '***** SIGTERM RECEIVED *****'
+        exit_signaled = True
     elif signum == signal.SIGINT:
         message = '***** SIGINT RECEIVED *****'
+        exit_signaled = True
     elif (platform == 'linux' or platform == 'darwin') and signum == signal.SIGHUP:
         message = '***** SIGHUP RECEIVED *****'
-    elif (platform == 'linux' or platform == 'darwin') and signum == signal.SIGPIPE:
-        message = '***** SIGPIPE RECEIVED *****'
-    else:
-        message = f"***** INTERRUPT SIGNAL {signum} RECEIVED *****"
+        hup_received = True
 
-    global exit_signaled
-    exit_signaled = True
-
-    log.critical(message)
+    if message:
+        log.critical(message)
 
 
 def render_wd_map_code(mapcode, as_byte_string=False):
@@ -131,7 +136,9 @@ def init_reddit_client():
     return reddit
 
 
-def main():
+def load_data_and_map(config_json_path):
+    global data
+    global wdmap
 
     # load bot config (not praw stuff)
     with open(config_json_path, "r") as config:
@@ -140,6 +147,10 @@ def main():
     # load character remap config
     with open(wdmap_json_path, "r") as config:
         wdmap = json.load(config)['unicode_to_char_map']
+
+
+def main():
+    load_data_and_map(config_json_path)
 
     # variables from config
     monitor_mode = data['monitor_mode'].lower() if 'monitor_mode' in data else 'multi'
@@ -175,7 +186,6 @@ def main():
 
         if platform == 'linux' or platform == 'macos':
             signal.signal(signal.SIGHUP, signal_handler)
-            signal.signal(signal.SIGPIPE, signal_handler)
 
         # check config
         if subreddits_list is None or len(subreddits_list) < 1:
@@ -210,7 +220,7 @@ def main():
 
         # begin monitoring
         log.info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
-        while not exit_signaled:
+        while not exit_signaled and not hup_received:
             found_new = False
 
             # check each subreddit
@@ -357,4 +367,8 @@ Wingdings translation from the [above comment]({comm_link})
 
 
 if __name__ == '__main__':
-    main()
+    # the main() loop will run until either sighup, sigterm, or sigint are received
+    # if main() exited due to sighup, it will continue to loop here, effectively
+    # reloading the configuration and re-initializing
+    while not exit_signaled:
+        main()
