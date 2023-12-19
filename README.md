@@ -98,11 +98,11 @@ This section pertains to [`config.json`](./config-example.json) and the settings
 
 - `log_level`
     - How noisy the logs should be. If the bot is particularly busy and the instance where this is running is low on space, you may want to set logging to a more exclusive level to reduce the disk space utilized by the log.
+    - Default value: `info`
     - Example:
     ```json
     "log_level": "info"
     ```
-    - Default value: `info`
     - Possible values:
         - `debug`: Very noisy, lots of logging output. Useful for troubleshooting and development. Not recommended for normal use.
         - `info`: Reasonable amount of logs for normal operation, useful for auditing which submissions and comments are responded to. Recommended for normal usage.
