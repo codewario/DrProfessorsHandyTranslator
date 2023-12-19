@@ -382,4 +382,5 @@ if __name__ == '__main__':
     # if main() exited due to sighup, it will continue to loop here, effectively
     # reloading the configuration and re-initializing
     while not exit_signaled:
+        hup_received = False
         main()
