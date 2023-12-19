@@ -4,7 +4,9 @@ import re
 import json
 import logging as log
 import os
+import signal
 from time import sleep
+from sys import platform
 
 # global variables
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -42,6 +44,11 @@ def init_logging(data):
         level=log_level,
         format='%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
     )
+
+
+def signal_handler(signum, frame):
+    # not much to do on cleanup but we do want to log the received signal
+    log.critical(f"Interrupt {signal._name_} received")
 
 
 def render_wd_map_code(mapcode, as_byte_string=False):
@@ -146,6 +153,14 @@ def main():
     log.info(f"Current working directory: {os.getcwd()}")
 
     try:
+        # set up signal handlers
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+
+        if platform == 'linux' or platform == 'macos':
+            signal.signal(signal.SIGHUP, signal_handler)
+            signal.signal(signal.SIGPIPE, signal_handler)
+
         # check config
         if subreddits_list is None or len(subreddits_list) < 1:
             log.critical('No subreddits configured to monitor, exiting')
