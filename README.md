@@ -74,6 +74,7 @@ RestartSec=1
 User=codewario
 WorkingDirectory=/home/codewario/src/dpht
 ExecStart=/home/codewario/src/dpht/venv/bin/python main.py
+ExecReload=kill -HUP $MAINPID
 
 [Install]
 WantedBy=multi-user.target

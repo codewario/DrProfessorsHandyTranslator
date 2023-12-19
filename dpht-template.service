@@ -11,6 +11,7 @@ RestartPreventExitStatus=1 2
 User=USERNAME
 WorkingDirectory=SERVICEPATH
 ExecStart=/usr/bin/python main.py
+ExecReload=kill -HUP $MAINPID
 
 [Install]
 WantedBy=multi-user.target
