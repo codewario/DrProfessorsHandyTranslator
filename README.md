@@ -45,7 +45,7 @@ As an alternative, you can use the Windows Task scheduler to configure Python to
 
 ### Linux
 
-Included in this repo is a systemd service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a systemd service with the following steps (the systemd folder may be elsewhere on non-Debian-based distributions of Linux):
+Included in this repo is a `systemd` service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a `systemd` service with the following steps (the `systemd` folder may be elsewhere on non-Debian-based distributions of Linux):
 
 1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
@@ -68,6 +68,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=on-failure
+RestartPreventExitStatus=1 2
 RestartSec=1
 User=codewario
 WorkingDirectory=/home/codewario/src/dpht
