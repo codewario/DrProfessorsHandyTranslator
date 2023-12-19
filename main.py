@@ -143,84 +143,86 @@ def main():
     log.info('Starting the Dr. Professor''s Handy Translator')
     log.info(f"Current working directory: {os.getcwd()}")
 
-    # check config
-    if subreddits_list is None or len(subreddits_list) < 1:
-        log.error('No subreddits configured to monitor, exiting')
-        exit(1)
+    try:
+        # check config
+        if subreddits_list is None or len(subreddits_list) < 1:
+            log.critical('No subreddits configured to monitor, exiting')
+            exit(1)
 
-    if monitor_mode == 'multi' and len(subreddits_list) > 100:
-        log.error('Too many subreddits for multireddit mode (max 100)')
+        if monitor_mode == 'multi' and len(subreddits_list) > 100:
+            log.critical('Too many subreddits for multireddit mode (max 100)')
+            exit(2)
 
-    log.debug('Rendering charmap from wdmap')
-    charmap = get_charmap_from_utfmap(wdmap)
+        log.debug('Rendering charmap from wdmap')
+        charmap = get_charmap_from_utfmap(wdmap)
 
-    log.debug('Compiling expressions')
-    wd_regex = compile_charmap_expression(charmap, wd_detect_threshold)
+        log.debug('Compiling expressions')
+        wd_regex = compile_charmap_expression(charmap, wd_detect_threshold)
 
-    # connect to reddit
-    log.debug('Creating client')
-    reddit = init_reddit_client()
+        # connect to reddit
+        log.debug('Creating client')
+        reddit = init_reddit_client()
 
-    # initialize arrays of subreddit objects
-    subreddits = []
-    if monitor_mode == 'multi':
-        # multireddit name is made by joining all sub names with a plus
-        subreddits.append(reddit.subreddit('+'.join(subreddits_list)))
-    else:
-        for subreddit_name in subreddits_list:
-            subreddits.append(reddit.subreddit(subreddit_name))
-    
-    subm_streams = [None] * len(subreddits)
-    comm_streams = [None] * len(subreddits)
+        # initialize arrays of subreddit objects
+        subreddits = []
+        if monitor_mode == 'multi':
+            # multireddit name is made by joining all sub names with a plus
+            subreddits.append(reddit.subreddit('+'.join(subreddits_list)))
+        else:
+            for subreddit_name in subreddits_list:
+                subreddits.append(reddit.subreddit(subreddit_name))
+        
+        subm_streams = [None] * len(subreddits)
+        comm_streams = [None] * len(subreddits)
 
-    # begin monitoring
-    log.info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
-    while True:
-        found_new = False
+        # begin monitoring
+        log.info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
+        while True:
+            found_new = False
 
-        # check each subreddit
-        # each property reference results in an API call, so store what we can in variables
-        # to reduce usage
-        for subreddit in subreddits:
-            subr_url = subreddit.url if monitor_mode != 'multi' else '+'.join(subreddits_list)
-            subr_index = subreddits.index(subreddit)
+            # check each subreddit
+            # each property reference results in an API call, so store what we can in variables
+            # to reduce usage
+            for subreddit in subreddits:
+                subr_url = subreddit.url if monitor_mode != 'multi' else '+'.join(subreddits_list)
+                subr_index = subreddits.index(subreddit)
 
-            if not ignore_submissions:
-                log.debug(f"Checking {subr_url} for new submissions")
+                if not ignore_submissions:
+                    log.debug(f"Checking {subr_url} for new submissions")
 
-                # set up stream if not done so already
-                if subm_streams[subr_index] is None:
-                    subm_streams[subr_index] = subreddit.stream.submissions(skip_existing = skip_existing_on_start, pause_after = 1)
-                
-                subm_stream = subm_streams[subr_index]
+                    # set up stream if not done so already
+                    if subm_streams[subr_index] is None:
+                        subm_streams[subr_index] = subreddit.stream.submissions(skip_existing = skip_existing_on_start, pause_after = 1)
+                    
+                    subm_stream = subm_streams[subr_index]
 
-                # check incoming posts
-                for submission in subm_stream:
-                    if submission is None:
-                        break
-                    found_new = True
+                    # check incoming posts
+                    for submission in subm_stream:
+                        if submission is None:
+                            break
+                        found_new = True
 
-                    try:
-                        subm_id = submission.id
-                        subm_title = remove_vs_chars(submission.title)
-                        subm_text = remove_vs_chars(submission.selftext)
-                        subm_shortlink = submission.shortlink
-                        
-                        log.debug(f"Checking new submission: {subm_shortlink}")
+                        try:
+                            subm_id = submission.id
+                            subm_title = remove_vs_chars(submission.title)
+                            subm_text = remove_vs_chars(submission.selftext)
+                            subm_shortlink = submission.shortlink
+                            
+                            log.debug(f"Checking new submission: {subm_shortlink}")
 
-                        # if we haven't replied and wingdings are present in the title or body
-                        if wd_regex.search(subm_title) or wd_regex.search(subm_text):
+                            # if we haven't replied and wingdings are present in the title or body
+                            if wd_regex.search(subm_title) or wd_regex.search(subm_text):
 
-                            log.info(f"Translating Wingdings in {subr_url} post id {subm_id}: {subm_shortlink}")
+                                log.info(f"Translating Wingdings in {subr_url} post id {subm_id}: {subm_shortlink}")
 
-                            # Translate detected wingdings here
-                            # Comment reply should include original title and body with translated text replacing the wingdings
-                            log.debug('Translating title')
-                            t_title = translate_text(subm_title, charmap)
-                            log.debug('Translating text')
-                            t_text = translate_text(subm_text, charmap)
+                                # Translate detected wingdings here
+                                # Comment reply should include original title and body with translated text replacing the wingdings
+                                log.debug('Translating title')
+                                t_title = translate_text(subm_title, charmap)
+                                log.debug('Translating text')
+                                t_text = translate_text(subm_text, charmap)
 
-                            reply = f"""
+                                reply = f"""
 Wingdings translation from the [above post]({subm_shortlink})
 
 ---
@@ -232,57 +234,57 @@ Wingdings translation from the [above post]({subm_shortlink})
 ---
 
 {reply_footer}
-    """
+"""
 
-                            # Post the reply comment
-                            log.debug('Sending translation as reply')
-                            try:
-                                result = submission.reply(reply)
-                                r_link = result.permalink
-                                if distinguish_reply:
-                                    try:
-                                        result.mod.distinguish(sticky = sticky_reply)
-                                    except prawexceptions.PrawcoreException as e2:
-                                        log.warning(f"Failed to distinguish {r_link}: {e}")
-                            except prawexceptions.PrawcoreException as e:
-                                log.error(f"Unable to reply to {subm_shortlink} with translation: {e}")
-                    except Exception as e:
-                        log.error('An error occurred while checking submissions: %s', e)
-            else:
-                log.debug('Ignoring submissions per configuration')
+                                # Post the reply comment
+                                log.debug('Sending translation as reply')
+                                try:
+                                    result = submission.reply(reply)
+                                    r_link = result.permalink
+                                    if distinguish_reply:
+                                        try:
+                                            result.mod.distinguish(sticky = sticky_reply)
+                                        except prawexceptions.PrawcoreException as e2:
+                                            log.warning(f"Failed to distinguish {r_link}: {e}")
+                                except prawexceptions.PrawcoreException as e:
+                                    log.error(e, stack_info = True, exc_info = True)
+                        except Exception as e:
+                            log.error(e, stack_info = True, exc_info = True)
+                else:
+                    log.debug('Ignoring submissions per configuration')
 
-            # check incoming comments
-            if not ignore_comments:
-                log.debug(f"Checking {subr_url} for new comments")
+                # check incoming comments
+                if not ignore_comments:
+                    log.debug(f"Checking {subr_url} for new comments")
 
-                # set up stream if not done so already
-                if comm_streams[subr_index] is None:
-                    comm_streams[subr_index] = subreddit.stream.comments(skip_existing = skip_existing_on_start, pause_after = 1)
-                
-                comm_stream = comm_streams[subr_index]
+                    # set up stream if not done so already
+                    if comm_streams[subr_index] is None:
+                        comm_streams[subr_index] = subreddit.stream.comments(skip_existing = skip_existing_on_start, pause_after = 1)
+                    
+                    comm_stream = comm_streams[subr_index]
 
-                for comment in comm_stream:
-                    if comment is None:
-                        break
-                    found_new = True
+                    for comment in comm_stream:
+                        if comment is None:
+                            break
+                        found_new = True
 
-                    try:
-                        comm_id = comment.id
-                        comm_body = remove_vs_chars(comment.body)
-                        comm_link = comment.permalink
+                        try:
+                            comm_id = comment.id
+                            comm_body = remove_vs_chars(comment.body)
+                            comm_link = comment.permalink
 
-                        log.debug(f"Checking new comment: {comm_link}")
+                            log.debug(f"Checking new comment: {comm_link}")
 
-                        # if we haven't replied and wingdings are present in the body
-                        if wd_regex.search(comm_body):
+                            # if we haven't replied and wingdings are present in the body
+                            if wd_regex.search(comm_body):
 
-                            log.info(f"Translating Wingdings in comment id {comm_id}: {comm_link}")
+                                log.info(f"Translating Wingdings in comment id {comm_id}: {comm_link}")
 
-                            # Translate detected wingdings here
-                            # Comment reply should include original body translated text replacing the wingdings
-                            log.debug('Translating comment')
-                            t_text = translate_text(comm_body, charmap)
-                            reply = f"""
+                                # Translate detected wingdings here
+                                # Comment reply should include original body translated text replacing the wingdings
+                                log.debug('Translating comment')
+                                t_text = translate_text(comm_body, charmap)
+                                reply = f"""
 Wingdings translation from the [above comment]({comm_link})
 
 ---
@@ -292,29 +294,33 @@ Wingdings translation from the [above comment]({comm_link})
 ---
 
 {reply_footer}
-    """
+"""
 
-                            # Post the reply comment
-                            log.debug('Sending translation as reply')
-                            try:
-                                result = comment.reply(reply)
-                                r_link = result.shortlink
-                                if distinguish_reply:
-                                    try:
-                                        result.mod.distinguish()
-                                    except prawexceptions.PrawcoreException as e:
-                                        log.warning(f"Failed to distinguish {r_link}: {e}")
-                            except prawexceptions.PrawcoreException as e:
-                                log.error(f"Unable to reply to {comm_link} with translation: {e}")
-                    except Exception as e:
-                        log.error('An error occurred while checking comments: %s', e)
-            else:
-                log.debug('Ignoring comments per configuration')
+                                # Post the reply comment
+                                log.debug('Sending translation as reply')
+                                try:
+                                    result = comment.reply(reply)
+                                    r_link = result.shortlink
+                                    if distinguish_reply:
+                                        try:
+                                            result.mod.distinguish()
+                                        except prawexceptions.PrawcoreException as e:
+                                            log.warning(f"Failed to distinguish {r_link}: {e}")
+                                except prawexceptions.PrawcoreException as e:
+                                    log.error(e, stack_info = True, exc_info = True)
+                        except Exception as e:
+                            log.error(e, stack_info = True, exc_info = True)
+                else:
+                    log.debug('Ignoring comments per configuration')
 
-        if not found_new:
-            # If there were no posts to process, sleep 1 minute
-            log.debug(f"Nothing new found, resting for {waiting_period}")
-            sleep(waiting_period)
+            if not found_new:
+                # If there were no posts to process, sleep 1 minute
+                log.debug(f"Nothing new found, resting for {waiting_period}")
+                sleep(waiting_period)
+    except Exception as e:
+        log.critical(e, stack_info = True, exc_info = True)
+    
+    exit(-1)
 
 if __name__ == '__main__':
     main()
