@@ -41,7 +41,7 @@ If you want to run this in a Python venv, make sure it is created and activated 
 
 While this is possible on Windows via the use of [NSSM](https://nssm.cc), I'm not familiar enough with the tool to be able to provide instructions at this time. Windows services must implement a Windows-service control interface (the CPython interpreter does not), which is why special tooling is required to run "non-services" as a service.
 
-As an alternative, you can use the Windows Task scheduler to configure Python to run [`main.py`](./main.py) on boot or login.
+As an alternative, you can use the Windows Task Scheduler to configure Python to run [`main.py`](./main.py) on boot or login.
 
 ### Linux
 
