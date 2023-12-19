@@ -12,11 +12,11 @@ config_json_path = os.path.join(script_dir, 'config.json')
 wdmap_json_path = os.path.join(script_dir, 'wdmap.json')
 md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 
-# functions
+
 def init_logging(data):
     log_level = log.INFO
     if 'log_level' in data:
-        
+
         ll_val = data['log_level']
 
         if ll_val == 'debug':
@@ -30,24 +30,18 @@ def init_logging(data):
         elif ll_val == 'critical':
             log_level = log.CRITICAL
         else:
-            raise RuntimeError(f"Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values")
+            raise RuntimeError('Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values')
 
     log.basicConfig(
-        filename = 'dpht.log',
-        filemode = 'w' if ('overwrite_log' in data and data['overwrite_log'] == True) else 'a',
-        encoding = 'utf-8',
-        level = log_level,
-        format = '%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
+        filename='dpht.log',
+        filemode='w' if 'overwrite_log' in data and data['overwrite_log'] else 'a',
+        encoding='utf-8',
+        level=log_level,
+        format='%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
     )
 
-# TODO: Not quite working yet
-def escape_md(text):
-    escaped = text
-    for char in md_reserved_syntax:
-        escaped = escaped.replace(char, f"\{char}")
-    return escaped
 
-def render_wd_map_code(mapcode, as_byte_string = False):
+def render_wd_map_code(mapcode, as_byte_string=False):
     render = ''
     for code in mapcode.split('+'):
         render += rf"\u{code}"
@@ -56,30 +50,33 @@ def render_wd_map_code(mapcode, as_byte_string = False):
         render_cmd += u".decode('utf-16')"
     return eval(render_cmd)
 
-# generate a character mapping from the decoded unicode mappings
+
 def get_charmap_from_utfmap(utfmap):
+    # generate a character mapping from the decoded unicode mappings
     charmap = {}
     for wdcode in utfmap:
         decoded = render_wd_map_code(wdcode)
         charmap[decoded] = utfmap[wdcode]
     return charmap
 
-# convert characters in text as defined in the character mapping
+
 def translate_text(text, charmap, flags=0, vs_chars=['\ufe0e', '\ufe0f']):
+    # convert characters in text as defined in the character mapping
     if not text:
         return ''
     elif not isinstance(text, str):
         raise TypeError('input must be a string')
-    
+
     # remove variation selectors
     translated = text
     for char in vs_chars:
         translated = translated.replace(char, '')
-    
+
     # replace characters as mapped
     for char in charmap:
         translated = translated.replace(char, charmap[char])
     return translated
+
 
 def remove_vs_chars(text, vs_chars=['\ufe0e', '\ufe0f']):
     result = text
@@ -87,11 +84,13 @@ def remove_vs_chars(text, vs_chars=['\ufe0e', '\ufe0f']):
         result = result.replace(char, '')
     return result
 
-# compile regex for character map detection
+
 def compile_charmap_expression(charmap, detect_threshold):
+    # compile regex for character map detection
     char_str = u''.join(charmap.keys())
     expr = f"[{char_str}]{{{detect_threshold}}}"
-    return re.compile(expr, flags = re.MULTILINE)
+    return re.compile(expr, flags=re.MULTILINE)
+
 
 def init_reddit_client():
     reddit = praw.Reddit('dpht')
@@ -105,7 +104,7 @@ def init_reddit_client():
 
     return reddit
 
-# Main Execution
+
 def main():
 
     # load bot config (not praw stuff)
@@ -171,7 +170,7 @@ def main():
         else:
             for subreddit_name in subreddits_list:
                 subreddits.append(reddit.subreddit(subreddit_name))
-        
+
         subm_streams = [None] * len(subreddits)
         comm_streams = [None] * len(subreddits)
 
@@ -192,8 +191,8 @@ def main():
 
                     # set up stream if not done so already
                     if subm_streams[subr_index] is None:
-                        subm_streams[subr_index] = subreddit.stream.submissions(skip_existing = skip_existing_on_start, pause_after = 1)
-                    
+                        subm_streams[subr_index] = subreddit.stream.submissions(skip_existing=skip_existing_on_start, pause_after=1)
+
                     subm_stream = subm_streams[subr_index]
 
                     # check incoming posts
@@ -207,7 +206,7 @@ def main():
                             subm_title = remove_vs_chars(submission.title)
                             subm_text = remove_vs_chars(submission.selftext)
                             subm_shortlink = submission.shortlink
-                            
+
                             log.debug(f"Checking new submission: {subm_shortlink}")
 
                             # if we haven't replied and wingdings are present in the title or body
@@ -243,13 +242,14 @@ Wingdings translation from the [above post]({subm_shortlink})
                                     r_link = result.permalink
                                     if distinguish_reply:
                                         try:
-                                            result.mod.distinguish(sticky = sticky_reply)
-                                        except prawexceptions.PrawcoreException as e2:
+                                            result.mod.distinguish(sticky=sticky_reply)
+                                        except prawexceptions.PrawcoreException as e:
                                             log.warning(f"Failed to distinguish {r_link}: {e}")
                                 except prawexceptions.PrawcoreException as e:
-                                    log.error(e, stack_info = True, exc_info = True)
+                                    log.error(e, stack_info=True,
+                                              exc_info=True)
                         except Exception as e:
-                            log.error(e, stack_info = True, exc_info = True)
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring submissions per configuration')
 
@@ -259,8 +259,8 @@ Wingdings translation from the [above post]({subm_shortlink})
 
                     # set up stream if not done so already
                     if comm_streams[subr_index] is None:
-                        comm_streams[subr_index] = subreddit.stream.comments(skip_existing = skip_existing_on_start, pause_after = 1)
-                    
+                        comm_streams[subr_index] = subreddit.stream.comments(skip_existing=skip_existing_on_start, pause_after=1)
+
                     comm_stream = comm_streams[subr_index]
 
                     for comment in comm_stream:
@@ -307,9 +307,10 @@ Wingdings translation from the [above comment]({comm_link})
                                         except prawexceptions.PrawcoreException as e:
                                             log.warning(f"Failed to distinguish {r_link}: {e}")
                                 except prawexceptions.PrawcoreException as e:
-                                    log.error(e, stack_info = True, exc_info = True)
+                                    log.error(e, stack_info=True,
+                                              exc_info=True)
                         except Exception as e:
-                            log.error(e, stack_info = True, exc_info = True)
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
 
@@ -318,9 +319,10 @@ Wingdings translation from the [above comment]({comm_link})
                 log.debug(f"Nothing new found, resting for {waiting_period}")
                 sleep(waiting_period)
     except Exception as e:
-        log.critical(e, stack_info = True, exc_info = True)
-    
+        log.critical(e, stack_info=True, exc_info=True)
+
     exit(-1)
+
 
 if __name__ == '__main__':
     main()
