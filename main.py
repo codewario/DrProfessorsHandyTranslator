@@ -1,55 +1,41 @@
-from praw import Reddit as f_praw_Reddit
-from prawcore import exceptions as m_prawexceptions
-from re import compile as f_re_compile
-from re import MULTILINE as e_re_MULTILINE
-from json import load as f_json_load
-from os import getcwd as f_os_getcwd
-from os.path import dirname as f_os_path_dirname
-from os.path import join as f_os_path_join
-from os.path import realpath as f_os_path_realpath
+import praw
+from prawcore import exceptions as prawexceptions
+import re
+import json
+import logging as log
+import os
 from time import sleep
-from logging import DEBUG as e_log_DEBUG
-from logging import INFO as e_log_INFO
-from logging import WARNING as e_log_WARNING
-from logging import ERROR as e_log_ERROR
-from logging import CRITICAL as e_log_CRITICAL
-from logging import debug as f_log_debug
-from logging import info as f_log_info
-from logging import warning as f_log_warning
-from logging import error as f_log_error
-from logging import critical as f_log_critical
-from logging import basicConfig as f_log_basicConfig
 
 # global variables
-script_dir = f_os_path_dirname(f_os_path_realpath(__file__))
-config_json_path = f_os_path_join(script_dir, 'config.json')
-wdmap_json_path = f_os_path_join(script_dir, 'wdmap.json')
+script_dir = os.path.dirname(os.path.realpath(__file__))
+config_json_path = os.path.join(script_dir, 'config.json')
+wdmap_json_path = os.path.join(script_dir, 'wdmap.json')
 md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 reddit_site = 'https://www.reddit.com'
 
 
 def init_logging(data):
-    log_level = e_log_INFO
+    log_level = log.INFO
     if 'log_level' in data:
 
         ll_val = data['log_level']
 
         if ll_val == 'debug':
-            log_level = e_log_DEBUG
+            log_level = log.DEBUG
         elif ll_val == 'info':
-            log_level = e_log_INFO
+            log_level = log.INFO
         elif ll_val == 'warning':
-            log_level = e_log_WARNING
+            log_level = log.WARNING
         elif ll_val == 'error':
-            log_level = e_log_ERROR
+            log_level = log.ERROR
         elif ll_val == 'critical':
-            log_level = e_log_CRITICAL
+            log_level = log.CRITICAL
         else:
             raise RuntimeError('Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values')
 
         log_path = data['log_path'] if 'log_path' in data else 'dpht.log'
 
-    f_log_basicConfig(
+    log.basicConfig(
         filename=log_path,
         filemode='w' if 'overwrite_log' in data and data['overwrite_log'] else 'a',
         encoding='utf-8',
@@ -106,11 +92,11 @@ def compile_charmap_expression(charmap, detect_threshold):
     # compile regex for character map detection
     char_str = u''.join(charmap.keys())
     expr = f"[{char_str}]{{{detect_threshold}}}"
-    return f_re_compile(expr, flags=e_re_MULTILINE)
+    return re.compile(expr, flags=re.MULTILINE)
 
 
 def init_reddit_client():
-    reddit = f_praw_Reddit('dpht')
+    reddit = praw.Reddit('dpht')
 
     # Fix the extra quotes that reading from praw.ini adds to these
     # fields for some reason
@@ -126,11 +112,11 @@ def main():
 
     # load bot config (not praw stuff)
     with open(config_json_path, "r") as config:
-        data = f_json_load(config)
+        data = json.load(config)
 
     # load character remap config
     with open(wdmap_json_path, "r") as config:
-        wdmap = f_json_load(config)['unicode_to_char_map']
+        wdmap = json.load(config)['unicode_to_char_map']
 
     # variables from config
     monitor_mode = data['monitor_mode'].lower() if 'monitor_mode' in data else 'multi'
@@ -154,29 +140,29 @@ def main():
     init_logging(data)
 
     for i in range(3):
-        f_log_info("================================================================================")
+        log.info("================================================================================")
 
-    f_log_info('Starting the Dr. Professor''s Handy Translator')
-    f_log_info(f"Current working directory: {f_os_getcwd()}")
+    log.info('Starting the Dr. Professor''s Handy Translator')
+    log.info(f"Current working directory: {os.getcwd()}")
 
     try:
         # check config
         if subreddits_list is None or len(subreddits_list) < 1:
-            f_log_critical('No subreddits configured to monitor, exiting')
+            log.critical('No subreddits configured to monitor, exiting')
             exit(1)
 
         if monitor_mode == 'multi' and len(subreddits_list) > 100:
-            f_log_critical('Too many subreddits for multireddit mode (max 100)')
+            log.critical('Too many subreddits for multireddit mode (max 100)')
             exit(2)
 
-        f_log_debug('Rendering charmap from wdmap')
+        log.debug('Rendering charmap from wdmap')
         charmap = get_charmap_from_utfmap(wdmap)
 
-        f_log_debug('Compiling expressions')
+        log.debug('Compiling expressions')
         wd_regex = compile_charmap_expression(charmap, wd_detect_threshold)
 
         # connect to reddit
-        f_log_debug('Creating client')
+        log.debug('Creating client')
         reddit = init_reddit_client()
 
         # initialize arrays of subreddit objects
@@ -192,7 +178,7 @@ def main():
         comm_streams = [None] * len(subreddits)
 
         # begin monitoring
-        f_log_info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
+        log.info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
         while True:
             found_new = False
 
@@ -204,7 +190,7 @@ def main():
                 subr_index = subreddits.index(subreddit)
 
                 if not ignore_submissions:
-                    f_log_debug(f"Checking {subr_url} for new submissions")
+                    log.debug(f"Checking {subr_url} for new submissions")
 
                     # set up stream if not done so already
                     if subm_streams[subr_index] is None:
@@ -223,18 +209,18 @@ def main():
                             subm_text = remove_vs_chars(submission.selftext)
                             subm_shortlink = submission.shortlink
 
-                            f_log_debug(f"Checking new submission: {subm_shortlink}")
+                            log.debug(f"Checking new submission: {subm_shortlink}")
 
                             # if we haven't replied and wingdings are present in the title or body
                             if wd_regex.search(subm_title) or wd_regex.search(subm_text):
 
-                                f_log_info(f"Translating Wingdings in {subr_url} post: {subm_shortlink}")
+                                log.info(f"Translating Wingdings in {subr_url} post: {subm_shortlink}")
 
                                 # Translate detected wingdings here
                                 # Comment reply should include original title and body with translated text replacing the wingdings
-                                f_log_debug('Translating title')
+                                log.debug('Translating title')
                                 t_title = translate_text(subm_title, charmap)
-                                f_log_debug('Translating text')
+                                log.debug('Translating text')
                                 t_text = translate_text(subm_text, charmap)
 
                                 reply = f"""
@@ -252,25 +238,26 @@ Wingdings translation from the [above post]({subm_shortlink})
 """
 
                                 # Post the reply comment
-                                f_log_debug('Sending translation as reply')
+                                log.debug('Sending translation as reply')
                                 try:
                                     result = submission.reply(reply)
                                     r_link = result.permalink
                                     if distinguish_reply:
                                         try:
                                             result.mod.distinguish(sticky=sticky_reply)
-                                        except m_prawexceptions.PrawcoreException as e:
-                                            f_log_warning(f"Failed to distinguish {r_link}: {e}")
-                                except m_prawexceptions.PrawcoreException as e:
-                                    f_log_error(e, stack_info=True, exc_info=True)
+                                        except prawexceptions.PrawcoreException as e:
+                                            log.warning(f"Failed to distinguish {r_link}: {e}")
+                                except prawexceptions.PrawcoreException as e:
+                                    log.error(e, stack_info=True,
+                                              exc_info=True)
                         except Exception as e:
-                            f_log_error(e, stack_info=True, exc_info=True)
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
-                    f_log_debug('Ignoring submissions per configuration')
+                    log.debug('Ignoring submissions per configuration')
 
                 # check incoming comments
                 if not ignore_comments:
-                    f_log_debug(f"Checking {subr_url} for new comments")
+                    log.debug(f"Checking {subr_url} for new comments")
 
                     # set up stream if not done so already
                     if comm_streams[subr_index] is None:
@@ -285,19 +272,18 @@ Wingdings translation from the [above post]({subm_shortlink})
 
                         try:
                             comm_body = remove_vs_chars(comment.body)
-                            # Comment permalink is not the full URL, it is the part of the URL after "https://www.reddit.com"
                             comm_link = f"{reddit_site}{comment.permalink}"
 
-                            f_log_debug(f"Checking new comment: {comm_link}")
+                            log.debug(f"Checking new comment: {comm_link}")
 
                             # if we haven't replied and wingdings are present in the body
                             if wd_regex.search(comm_body):
 
-                                f_log_info(f"Translating Wingdings in comment: {comm_link}")
+                                log.info(f"Translating Wingdings in comment: {comm_link}")
 
                                 # Translate detected wingdings here
                                 # Comment reply should include original body translated text replacing the wingdings
-                                f_log_debug('Translating comment')
+                                log.debug('Translating comment')
                                 t_text = translate_text(comm_body, charmap)
                                 reply = f"""
 Wingdings translation from the [above comment]({comm_link})
@@ -312,28 +298,29 @@ Wingdings translation from the [above comment]({comm_link})
 """
 
                                 # Post the reply comment
-                                f_log_debug('Sending translation as reply')
+                                log.debug('Sending translation as reply')
                                 try:
                                     result = comment.reply(reply)
                                     r_link = result.permalink
                                     if distinguish_reply:
                                         try:
                                             result.mod.distinguish()
-                                        except m_prawexceptions.PrawcoreException as e:
-                                            f_log_warning(f"Failed to distinguish {r_link}: {e}")
-                                except m_prawexceptions.PrawcoreException as e:
-                                    f_log_error(e, stack_info=True, exc_info=True)
+                                        except prawexceptions.PrawcoreException as e:
+                                            log.warning(f"Failed to distinguish {r_link}: {e}")
+                                except prawexceptions.PrawcoreException as e:
+                                    log.error(e, stack_info=True,
+                                              exc_info=True)
                         except Exception as e:
-                            f_log_error(e, stack_info=True, exc_info=True)
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
-                    f_log_debug('Ignoring comments per configuration')
+                    log.debug('Ignoring comments per configuration')
 
             if not found_new:
                 # If there were no posts to process, sleep 1 minute
-                f_log_debug(f"Nothing new found, resting for {waiting_period}")
+                log.debug(f"Nothing new found, resting for {waiting_period}")
                 sleep(waiting_period)
     except Exception as e:
-        f_log_critical(e, stack_info=True, exc_info=True)
+        log.critical(e, stack_info=True, exc_info=True)
 
     exit(-1)
 
