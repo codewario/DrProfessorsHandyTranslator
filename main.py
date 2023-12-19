@@ -300,7 +300,7 @@ Wingdings translation from the [above comment]({comm_link})
                                 log.debug('Sending translation as reply')
                                 try:
                                     result = comment.reply(reply)
-                                    r_link = result.shortlink
+                                    r_link = result.permalink
                                     if distinguish_reply:
                                         try:
                                             result.mod.distinguish()
