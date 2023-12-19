@@ -136,7 +136,7 @@ def init_reddit_client():
     return reddit
 
 
-def load_data_and_map(config_json_path):
+def load_data_and_map(config_json_path, wdmap_json_path):
     global data
     global wdmap
 
@@ -150,7 +150,7 @@ def load_data_and_map(config_json_path):
 
 
 def main():
-    load_data_and_map(config_json_path)
+    load_data_and_map(config_json_path, wdmap_json_path)
 
     # variables from config
     monitor_mode = data['monitor_mode'].lower() if 'monitor_mode' in data else 'multi'
