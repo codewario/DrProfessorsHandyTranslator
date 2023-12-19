@@ -22,6 +22,8 @@ This bot requires Python 3.9 or later to run. May run on some earlier versions o
 
 The only third party package required is `praw`, which can be installed using `pip install praw`.
 
+This bot should be compatible with Windows, Mac OS, and Linux operating systems.
+
 # Setup and execution
 
 If you want to run this in a Python venv, make sure it is created and activated before going through the steps below:
@@ -33,7 +35,17 @@ If you want to run this in a Python venv, make sure it is created and activated 
 
 ## Install as a service
 
-Included in this repo is a systemd service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a systemd service with the following steps:
+> Note: Installing as a service is ***not*** a requirement. This is simply a "nice-to-have".
+
+### Windows
+
+While this is possible on Windows via the use of [NSSM](https://nssm.cc), I'm not familiar enough with the tool to be able to provide instructions at this time. Windows services must implement a Windows-service control interface (the CPython interpreter does not), which is why special tooling is required to run "non-services" as a service.
+
+As an alternative, you can use the Windows Task scheduler to configure Python to run [`main.py`](./main.py) on boot or login.
+
+### Linux
+
+Included in this repo is a systemd service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a systemd service with the following steps (the systemd folder may be elsewhere on non-Debian-based distributions of Linux):
 
 1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
@@ -64,6 +76,10 @@ ExecStart=/home/codewario/src/dpht/venv/bin/python main.py
 [Install]
 WantedBy=multi-user.target
 ```
+
+### Mac OS
+
+I have no idea how to configure `launchd`. Instructions/pull requests are welcome for this one :)
 
 # Configuration Settings
 
