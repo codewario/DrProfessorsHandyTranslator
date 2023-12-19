@@ -108,7 +108,18 @@ This section pertains to [`config.json`](./config-example.json) and the settings
         - `info`: Reasonable amount of logs for normal operation, useful for auditing which submissions and comments are responded to. Recommended for normal usage.
         - `warning`: Only log warning messages
         - `error`: Only log error messages
-        - `critical`: Only log critical messages 
+        - `critical`: Only log critical messages
+
+- `log_path`
+    - File path where the bot log file will be written to. Must have write permissions to the directory. Filename can be absolute or relative to the working directory when executing.
+    - Default value: `dpht.log` (will be placed in current directory at time of execution)
+    - Examples:
+    ```json
+    "log_path": "/tmp/dpht.log"
+    ```
+    ```json
+    "log_path": "C:\\Temp\\dpht.log"
+    ```
 
 - `overwrite_log`
     - Set to `true` if you want the bot log to be overwritten each time the bot starts. If `false`, the existing log will be appended to instead.

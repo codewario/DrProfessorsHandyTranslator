@@ -3,6 +3,7 @@
         
     ],
     "log_level": "info",
+    "log_path": "dpht.log",
     "overwrite_log": true,
     "wd_detect_threshold": 5,
     "skip_existing_on_start": true,

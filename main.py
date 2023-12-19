@@ -32,8 +32,10 @@ def init_logging(data):
         else:
             raise RuntimeError('Invalid log level specified, see https://docs.python.org/3/howto/logging.html#logging-levels for possible values')
 
+        log_path = data['log_path'] if 'log_path' in data else 'dpht.log'
+
     log.basicConfig(
-        filename='dpht.log',
+        filename=log_path,
         filemode='w' if 'overwrite_log' in data and data['overwrite_log'] else 'a',
         encoding='utf-8',
         level=log_level,
