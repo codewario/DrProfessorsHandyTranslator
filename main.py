@@ -359,10 +359,16 @@ Wingdings translation from the [above comment]({comm_link})
             if not found_new and not exit_signaled and not hup_received:
                 # If there were no posts to process, sleep 1 minute
                 log.debug(f"Nothing new found, resting for {waiting_period}")
-                for i in range(waiting_period):
+
+                # sleep in intervals, as we need to check for interrupt processing periodically
+                waited_for = 0
+                iter_sleep = 5
+
+                while waited_for < waiting_period:
                     # while waiting, check for interrupt signals
                     if not hup_received and not exit_signaled:
-                        sleep(1)
+                        sleep(iter_sleep)
+                        waited_for += iter_sleep
                     else:
                         break
     except Exception as e:
