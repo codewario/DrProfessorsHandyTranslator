@@ -14,6 +14,7 @@ config_json_path = os.path.join(script_dir, 'config.json')
 wdmap_json_path = os.path.join(script_dir, 'wdmap.json')
 md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 reddit_site = 'https://www.reddit.com'
+exit_signaled = False
 
 
 def init_logging(data):
@@ -59,6 +60,9 @@ def signal_handler(signum, frame):
         message = '***** SIGPIPE RECEIVED *****'
     else:
         message = f"***** INTERRUPT SIGNAL {signum} RECEIVED *****"
+
+    global exit_signaled
+    exit_signaled = True
 
     log.critical(message)
 
@@ -206,7 +210,7 @@ def main():
 
         # begin monitoring
         log.info(f"Monitoring subreddits: {', '.join(subreddits_list)}")
-        while True:
+        while not exit_signaled:
             found_new = False
 
             # check each subreddit
