@@ -356,10 +356,15 @@ Wingdings translation from the [above comment]({comm_link})
                 else:
                     log.debug('Ignoring comments per configuration')
 
-            if not found_new:
+            if not found_new and not exit_signaled and not hup_received:
                 # If there were no posts to process, sleep 1 minute
                 log.debug(f"Nothing new found, resting for {waiting_period}")
-                sleep(waiting_period)
+                for i in range(waiting_period):
+                    # while waiting, check for interrupt signals
+                    if not hup_received and not exit_signaled:
+                        sleep(1)
+                    else:
+                        break
     except Exception as e:
         log.critical(e, stack_info=True, exc_info=True)
 
