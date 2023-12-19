@@ -219,7 +219,6 @@ def main():
                         found_new = True
 
                         try:
-                            subm_id = submission.id
                             subm_title = remove_vs_chars(submission.title)
                             subm_text = remove_vs_chars(submission.selftext)
                             subm_shortlink = submission.shortlink
@@ -229,7 +228,7 @@ def main():
                             # if we haven't replied and wingdings are present in the title or body
                             if wd_regex.search(subm_title) or wd_regex.search(subm_text):
 
-                                f_log_info(f"Translating Wingdings in {subr_url} post id {subm_id}: {subm_shortlink}")
+                                f_log_info(f"Translating Wingdings in {subr_url} post: {subm_shortlink}")
 
                                 # Translate detected wingdings here
                                 # Comment reply should include original title and body with translated text replacing the wingdings
@@ -285,7 +284,6 @@ Wingdings translation from the [above post]({subm_shortlink})
                         found_new = True
 
                         try:
-                            comm_id = comment.id
                             comm_body = remove_vs_chars(comment.body)
                             # Comment permalink is not the full URL, it is the part of the URL after "https://www.reddit.com"
                             comm_link = f"{reddit_site}{comment.permalink}"
@@ -295,7 +293,7 @@ Wingdings translation from the [above post]({subm_shortlink})
                             # if we haven't replied and wingdings are present in the body
                             if wd_regex.search(comm_body):
 
-                                f_log_info(f"Translating Wingdings in comment id {comm_id}: {comm_link}")
+                                f_log_info(f"Translating Wingdings in comment: {comm_link}")
 
                                 # Translate detected wingdings here
                                 # Comment reply should include original body translated text replacing the wingdings
