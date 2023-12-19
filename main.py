@@ -48,7 +48,7 @@ def init_logging(data):
 
 def signal_handler(signum, frame):
     # not much to do on cleanup but we do want to log the received signal
-    log.critical(f"Interrupt {signal._name_} received")
+    log.critical(f"Interrupt {signum._name_} received")
 
 
 def render_wd_map_code(mapcode, as_byte_string=False):
