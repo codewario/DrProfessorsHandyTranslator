@@ -50,7 +50,8 @@ def init_logging(data):
         filemode='w' if 'overwrite_log' in data and data['overwrite_log'] else 'a',
         encoding='utf-8',
         level=log_level,
-        format='%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
+        format='%(asctime)s | %(levelname)s | PID:%(process)d %(message)s',
+        force=True
     )
 
 
