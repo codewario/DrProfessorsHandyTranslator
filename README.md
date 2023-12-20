@@ -30,6 +30,14 @@ If you want to run this in a Python venv, make sure it is created and activated 
 
 1. Make sure `praw` is installed: `pip install praw`
 2. Copy [`example.ini`](./example.ini) to `praw.ini`. Read the [PRAW.INI documentation](https://praw.readthedocs.io/en/stable/getting_started/configuration/prawini.html) to understand how to configure the PRAW client settings.
+   - It's also a good idea to limit who can read `praw.ini` to the user running the box, especially if you place your credentials there.
+   - On Windows you can change file ACLs this in the **Security** tab of the file's Properties dialog.
+   - On Linux or Mac OS, you can make sure only the user running the bot using these console commands (`sudo`` may be required as a prefix epending on the context):
+   ```bash
+   chown USERNAME:USERNAME praw.ini
+   chmod 600 praw.ini
+   ```
+
 3. Copy [`config-example.json`](./config-example.json) to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
 4. Assuming you are in this folder, run the bot with `python main.py`
 
