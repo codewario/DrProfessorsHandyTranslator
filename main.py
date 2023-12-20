@@ -204,7 +204,7 @@ Wingdings translation from the [above {'post' if is_post else 'comment'}]({link}
 
 ---
 
-{f"# Title {t_title}" if t_title else ''}
+{f"# Title: {t_title}" if t_title else ''}
 
 {t_text}
 
