@@ -49,7 +49,7 @@ Included in this repo is a `systemd` service template, [`dpht.service-template`]
 
 1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
-   - `User`: This should be the username you want the bot to run as on the local system.
+   - If you want to run the service as a user other than `root`, you can add the `User=USERNAME` field to the `[Service]` section.
    - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
    - `ExecStart`: Change the path to the `python` executable in this field in the following situations:
       - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
@@ -71,9 +71,8 @@ Type=simple
 Restart=on-failure
 RestartPreventExitStatus=1 2
 RestartSec=1
-User=codewario
-WorkingDirectory=/home/codewario/src/dpht
-ExecStart=/home/codewario/src/dpht/venv/bin/python main.py
+WorkingDirectory=/opt/dpht
+ExecStart=/opt/dpht/venv/bin/python main.py
 ExecReload=kill -HUP $MAINPID
 
 [Install]

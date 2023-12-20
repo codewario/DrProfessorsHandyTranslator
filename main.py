@@ -206,7 +206,7 @@ def check_and_translate_item(
 
 ---
 
-^(Wingdings translation from the) [^(above {'post' if is_post else 'comment'})]({link})^(. This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
+^(This is a Wingdings translation from the) [^(above {'post' if is_post else 'comment'})]({link})^(. This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
 
 ^(Issues? Report a problem on the) [^(issue tracker)](https://github.com/codewario/DrProfessorsHandyTranslator/issues)^.
 """
