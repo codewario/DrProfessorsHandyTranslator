@@ -64,7 +64,7 @@ Included in this repo is a `systemd` service template, [`dpht.service-template`]
       - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
       - If your system Python exists at a path other than `/usr/bin/python`
       - In the situations above, `main.py` still needs to be the first parameter to `python` (else it will just start the interactive interpreter).
-3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart|status`)
+3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart|status`). Enable the service to start on boot with `systemctl enable dpht`, or disable starting on boot with `systemctl disable dpht`.
 
 Example `dpht.service` which uses a venv'd Python instance:
 
@@ -86,6 +86,7 @@ ExecReload=kill -HUP $MAINPID
 [Install]
 WantedBy=multi-user.target
 ```
+
 
 ### Mac OS
 
