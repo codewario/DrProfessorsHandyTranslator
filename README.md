@@ -49,7 +49,7 @@ Included in this repo is a `systemd` service template, [`dpht.service-template`]
 
 1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
-   - `User`: This should be the username you want the bot to run as on the local system.
+   - If you want to run the service as a user other than `root`, you can add the `User=USERNAME` field to the `[Service]` section.
    - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
    - `ExecStart`: Change the path to the `python` executable in this field in the following situations:
       - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
@@ -71,9 +71,8 @@ Type=simple
 Restart=on-failure
 RestartPreventExitStatus=1 2
 RestartSec=1
-User=codewario
-WorkingDirectory=/home/codewario/src/dpht
-ExecStart=/home/codewario/src/dpht/venv/bin/python main.py
+WorkingDirectory=/opt/dpht
+ExecStart=/opt/dpht/venv/bin/python main.py
 ExecReload=kill -HUP $MAINPID
 
 [Install]
@@ -140,7 +139,7 @@ This section pertains to [`config.json`](./config-example.json) and the settings
     ```
 
 - `skip_existing_on_start`
-    - Set to `false` if you want to act on any posts that existed before this bot was running. Useful during development in a controlled environment, but `true` is recommended for normal operation as this may result in double-translations.
+    - Set to `false` if you want to act on any posts that existed before this bot was running. No longer results in double-replies, but this comes at the cost of increased API usage on the bot's first iteration of each stream. New mentions are always monitored regardless of this setting (unless `"ignore_mentions" = true` is set), but double-replies will not occur.
     - Default value: `true`
     - Example:
     ```json
@@ -190,11 +189,27 @@ This section pertains to [`config.json`](./config-example.json) and the settings
     ```
 
 - `ignore_comments`
-    - Set to `true` if you don't want to process comments for translation
+    - Set to `true` if you don't want to process comments for translation.
     - Default value: `false`
     - Example:
     ```json
     "ignore_comments": true
+    ```
+
+- `ignore_mentions`
+    - Set to `true` if you don't want to process on-demand translations via user mentions. Explicit mentions will be processed even if `ignore_comments` or `ignore_submissions` are enabled.
+    - Default value: `false`
+    - Example:
+    ```json
+    "ignore_mentions": false
+    ```
+
+- `mention_limit`
+    - The maximum number of historical mentions to process at a time. A higher value means higher API usage at bot startup, but means less chance for missed on-demand translation opportunities.
+    - Default value: 100
+    - Example:
+    ```json
+    "mention_limit": 100
     ```
 
 # wdmap.json
