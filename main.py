@@ -178,7 +178,6 @@ def check_and_translate_item(
         item: [Comment, Submission],
         detect_pattern: re.Pattern,
         charmap,
-        reply_footer='',
         distinguish=False,
         sticky=False):
     global processed_ids
@@ -201,17 +200,15 @@ def check_and_translate_item(
         t_text = translate_text(text, charmap)
 
         reply = f"""
-Wingdings translation from the [above {'post' if is_post else 'comment'}]({link})
-
----
-
 {f"# Title: {t_title}" if t_title else ''}
 
 {t_text}
 
 ---
 
-{reply_footer}
+^(Wingdings translation from the) [^(above {'post' if is_post else 'comment'})]({link})^(. This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
+
+^(Issues? Report a problem on the) [^(issue tracker)](https://github.com/codewario/DrProfessorsHandyTranslator/issues)^.
 """
 
         log.debug('Sending translation as reply')
@@ -264,12 +261,6 @@ def main():
     ignore_comments = data['ignore_comments'] if 'ignore_comments' in data else False
     ignore_mentions = data['ignore_mentions'] if 'ignore_mentions' in data else False
     mention_limit = data['mention_limit'] if 'mention_limit' in data else 100
-
-    reply_footer = '''
-^(This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
-
-^(Issues? Report a problem on the) [^(issue tracker)](https://github.com/codewario/DrProfessorsHandyTranslator/issues)^.
-'''
 
     # array of subreddits to monitor
     subreddits_list = data['subreddits'] if 'subreddits' in data else None
@@ -347,7 +338,7 @@ def main():
                         if submission.id not in processed_ids and not item_replied(reddit.config.username, submission):
                             found_new = True
                             try:
-                                check_and_translate_item(submission, wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                                check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
                             except prawexceptions.PrawcoreException as e:
                                 log.error(e, stack_info=True, exc_info=True)
@@ -374,7 +365,7 @@ def main():
                         if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
                             found_new = True
                             try:
-                                check_and_translate_item(comment, wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                                check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
                             except Exception as e:
                                 log.error(e, stack_info=True, exc_info=True)
@@ -389,7 +380,7 @@ def main():
                 for mention in mentions:
                     found_new = True
                     try:
-                        check_and_translate_item(mention.parent(), wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                        check_and_translate_item(mention.parent(), wd_regex, charmap, distinguish_reply, sticky_reply)
                         processed_ids.extend([mention.fullname, mention.parent_id])
                     except Exception as e:
                         log.error(e, stack_info=True, exc_info=True)
