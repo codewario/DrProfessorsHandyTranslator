@@ -1,5 +1,6 @@
-import praw
+from praw import Reddit
 from prawcore import exceptions as prawexceptions
+from praw.models import Comment, Submission
 import re
 import json
 import logging as log
@@ -16,6 +17,7 @@ md_reserved_syntax = r'''!#^&*()`~-_+[{]}\|:<.>/'''
 reddit_site = 'https://www.reddit.com'
 hup_received = False
 exit_signaled = False
+processed_ids = []
 
 # load these later
 data = None
@@ -123,8 +125,106 @@ def compile_charmap_expression(charmap, detect_threshold):
     return re.compile(expr, flags=re.MULTILINE)
 
 
+def item_replied(reddit_username, item: [Comment, Submission]):
+    if isinstance(item, Submission):
+        my_replies = [comment.author.name == reddit_username if comment.author else False for comment in item.comments]
+        returner = any(my_replies)
+        return returner
+
+    my_replies = [reply.author.name == reddit_username if reply.author else False for reply in item.replies]
+    returner = any(my_replies)
+    return returner
+
+
+def fetch_unprocessed_mentions(reddit: Reddit, username=None, limit=50):
+    global processed_ids
+
+    use_username = username if username else reddit.config.username
+    new_mentions = []
+    for item in reddit.inbox.mentions(limit=limit):
+
+        if isinstance(item, Submission):
+            # don't process mentions in submissions
+            continue
+        elif item.fullname in processed_ids:
+            # skip any mentions we're already aware of
+            continue
+        elif not re.search(rf"^\s*\/?u\/{use_username}\s*$", item.body, flags=re.IGNORECASE | re.MULTILINE):
+            # only process mentions that are only tagging the bot
+            continue
+
+        parent = item.parent()
+
+        if parent.fullname in processed_ids:
+            # don't waste API calls if we know we processed the parent
+            continue
+
+        if isinstance(parent, Comment):
+            parent.refresh()
+
+        if item_replied(use_username, parent):
+            # check that we haven't already replied in real time
+            # if yes, add it to the known list
+            processed_ids.extend([parent.fullname, item.fullname])
+            continue
+
+        # if we haven't replied, go ahead and return this as a new one
+        new_mentions.append(item)
+    return new_mentions
+
+
+def check_and_translate_item(
+        item: [Comment, Submission],
+        detect_pattern: re.Pattern,
+        charmap,
+        reply_footer='',
+        distinguish=False,
+        sticky=False):
+    global processed_ids
+    is_post = isinstance(item, Submission)
+
+    title = remove_vs_chars(item.title) if is_post else ''
+    text = remove_vs_chars(item.selftext if is_post else item.body)
+    link = item.shortlink if is_post else f"{reddit_site}{item.permalink}"
+
+    log.debug(f"Checking submission: {link}")
+
+    if detect_pattern.search(title) or detect_pattern.search(text):
+
+        log.info(f"Translating {'post' if is_post else 'comment'}: {link}")
+
+        log.debug('Translating title')
+        t_title = translate_text(title, charmap) if title else None
+
+        log.debug('Translating text')
+        t_text = translate_text(text, charmap)
+
+        reply = f"""
+Wingdings translation from the [above {'post' if is_post else 'comment'}]({link})
+
+---
+
+{f"# Title {t_title}" if t_title else ''}
+
+{t_text}
+
+---
+
+{reply_footer}
+"""
+
+        log.debug('Sending translation as reply')
+
+        result = item.reply(reply)
+        if distinguish:
+            try:
+                result.mod.distinguish(sticky=sticky)
+            except prawexceptions.PrawcoreException as e:
+                log.warning(f"Failed to distinguish {reddit_site}{result.permalink}: {e}")
+
+
 def init_reddit_client():
-    reddit = praw.Reddit('dpht')
+    reddit = Reddit('dpht')
 
     # Fix the extra quotes that reading from praw.ini adds to these
     # fields for some reason
@@ -152,7 +252,7 @@ def load_data_and_map(config_json_path, wdmap_json_path):
 def main():
     load_data_and_map(config_json_path, wdmap_json_path)
 
-    # variables from config
+    # variables from configs
     monitor_mode = data['monitor_mode'].lower() if 'monitor_mode' in data else 'multi'
     skip_existing_on_start = data['skip_existing_on_start'] if 'skip_existing_on_start' in data else True
     waiting_period = data['waiting_period'] if 'waiting_period' in data else 60
@@ -161,6 +261,8 @@ def main():
     sticky_reply = data['sticky_reply'] if 'sticky_reply' in data else False
     ignore_submissions = data['ignore_submissions'] if 'ignore_submissions' in data else False
     ignore_comments = data['ignore_comments'] if 'ignore_comments' in data else False
+    ignore_mentions = data['ignore_mentions'] if 'ignore_mentions' in data else False
+    mention_limit = data['mention_limit'] if 'mention_limit' in data else 100
 
     reply_footer = '''
 ^(This reply is courtesy of the) [^(Dr. Professor's Handy Translator)](https://github.com/codewario/DrProfessorsHandyTranslator)^!
@@ -179,6 +281,8 @@ def main():
     log.info('Starting the Dr. Professor''s Handy Translator')
     log.info(f"Current working directory: {os.getcwd()}")
 
+    returner = 0
+
     try:
         # set up signal handlers
         signal.signal(signal.SIGTERM, signal_handler)
@@ -188,10 +292,6 @@ def main():
             signal.signal(signal.SIGHUP, signal_handler)
 
         # check config
-        if subreddits_list is None or len(subreddits_list) < 1:
-            log.critical('No subreddits configured to monitor, exiting')
-            exit(1)
-
         if monitor_mode == 'multi' and len(subreddits_list) > 100:
             log.critical('Too many subreddits for multireddit mode (max 100)')
             exit(2)
@@ -205,6 +305,7 @@ def main():
         # connect to reddit
         log.debug('Creating client')
         reddit = init_reddit_client()
+        username = reddit.config.username
 
         # initialize arrays of subreddit objects
         subreddits = []
@@ -224,8 +325,6 @@ def main():
             found_new = False
 
             # check each subreddit
-            # each property reference results in an API call, so store what we can in variables
-            # to reduce usage
             for subreddit in subreddits:
                 subr_url = subreddit.url if monitor_mode != 'multi' else '+'.join(subreddits_list)
                 subr_index = subreddits.index(subreddit)
@@ -243,56 +342,14 @@ def main():
                     for submission in subm_stream:
                         if submission is None:
                             break
-                        found_new = True
 
-                        try:
-                            subm_title = remove_vs_chars(submission.title)
-                            subm_text = remove_vs_chars(submission.selftext)
-                            subm_shortlink = submission.shortlink
-
-                            log.debug(f"Checking new submission: {subm_shortlink}")
-
-                            # if we haven't replied and wingdings are present in the title or body
-                            if wd_regex.search(subm_title) or wd_regex.search(subm_text):
-
-                                log.info(f"Translating Wingdings in {subr_url} post: {subm_shortlink}")
-
-                                # Translate detected wingdings here
-                                # Comment reply should include original title and body with translated text replacing the wingdings
-                                log.debug('Translating title')
-                                t_title = translate_text(subm_title, charmap)
-                                log.debug('Translating text')
-                                t_text = translate_text(subm_text, charmap)
-
-                                reply = f"""
-Wingdings translation from the [above post]({subm_shortlink})
-
----
-
-# Title: {t_title}
-
-{t_text}
-
----
-
-{reply_footer}
-"""
-
-                                # Post the reply comment
-                                log.debug('Sending translation as reply')
-                                try:
-                                    result = submission.reply(reply)
-                                    r_link = result.permalink
-                                    if distinguish_reply:
-                                        try:
-                                            result.mod.distinguish(sticky=sticky_reply)
-                                        except prawexceptions.PrawcoreException as e:
-                                            log.warning(f"Failed to distinguish {r_link}: {e}")
-                                except prawexceptions.PrawcoreException as e:
-                                    log.error(e, stack_info=True,
-                                              exc_info=True)
-                        except Exception as e:
-                            log.error(e, stack_info=True, exc_info=True)
+                        if submission.id not in processed_ids and not item_replied(reddit.config.username, submission):
+                            found_new = True
+                            try:
+                                check_and_translate_item(submission, wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                                processed_ids.append(submission.fullname)
+                            except prawexceptions.PrawcoreException as e:
+                                log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring submissions per configuration')
 
@@ -309,52 +366,32 @@ Wingdings translation from the [above post]({subm_shortlink})
                     for comment in comm_stream:
                         if comment is None:
                             break
-                        found_new = True
 
-                        try:
-                            comm_body = remove_vs_chars(comment.body)
-                            comm_link = f"{reddit_site}{comment.permalink}"
+                        # ensure we are up-to-date on replies
+                        comment.refresh()
 
-                            log.debug(f"Checking new comment: {comm_link}")
-
-                            # if we haven't replied and wingdings are present in the body
-                            if wd_regex.search(comm_body):
-
-                                log.info(f"Translating Wingdings in comment: {comm_link}")
-
-                                # Translate detected wingdings here
-                                # Comment reply should include original body translated text replacing the wingdings
-                                log.debug('Translating comment')
-                                t_text = translate_text(comm_body, charmap)
-                                reply = f"""
-Wingdings translation from the [above comment]({comm_link})
-
----
-
-{t_text}
-
----
-
-{reply_footer}
-"""
-
-                                # Post the reply comment
-                                log.debug('Sending translation as reply')
-                                try:
-                                    result = comment.reply(reply)
-                                    r_link = result.permalink
-                                    if distinguish_reply:
-                                        try:
-                                            result.mod.distinguish()
-                                        except prawexceptions.PrawcoreException as e:
-                                            log.warning(f"Failed to distinguish {r_link}: {e}")
-                                except prawexceptions.PrawcoreException as e:
-                                    log.error(e, stack_info=True,
-                                              exc_info=True)
-                        except Exception as e:
-                            log.error(e, stack_info=True, exc_info=True)
+                        if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
+                            found_new = True
+                            try:
+                                check_and_translate_item(comment, wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                                processed_ids.append(comment.fullname)
+                            except Exception as e:
+                                log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
+
+            # check explicit mentions
+            if not ignore_mentions:
+                log.debug(f"Checking for new mentions of {username} (max {mention_limit})")
+
+                mentions = fetch_unprocessed_mentions(reddit, username, mention_limit)
+                for mention in mentions:
+                    found_new = True
+                    try:
+                        check_and_translate_item(mention.parent(), wd_regex, charmap, reply_footer, distinguish_reply, sticky_reply)
+                        processed_ids.extend([mention.fullname, mention.parent_id])
+                    except Exception as e:
+                        log.error(e, stack_info=True, exc_info=True)
 
             if not found_new and not exit_signaled and not hup_received:
                 # If there were no posts to process, sleep 1 minute
@@ -372,15 +409,18 @@ Wingdings translation from the [above comment]({comm_link})
                     else:
                         break
     except Exception as e:
+        returner = -1
         log.critical(e, stack_info=True, exc_info=True)
 
-    exit(-1)
+    return returner
 
 
 if __name__ == '__main__':
     # the main() loop will run until either sighup, sigterm, or sigint are received
     # if main() exited due to sighup, it will continue to loop here, effectively
     # reloading the configuration and re-initializing
+    exitcode = 0
     while not exit_signaled:
         hup_received = False
-        main()
+        exitcode = main()
+    exit(exitcode)

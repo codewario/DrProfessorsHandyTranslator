@@ -140,7 +140,7 @@ This section pertains to [`config.json`](./config-example.json) and the settings
     ```
 
 - `skip_existing_on_start`
-    - Set to `false` if you want to act on any posts that existed before this bot was running. Useful during development in a controlled environment, but `true` is recommended for normal operation as this may result in double-translations.
+    - Set to `false` if you want to act on any posts that existed before this bot was running. No longer results in double-replies, but this comes at the cost of increased API usage on the bot's first iteration of each stream. New mentions are always monitored regardless of this setting (unless `"ignore_mentions" = true` is set), but double-replies will not occur.
     - Default value: `true`
     - Example:
     ```json
@@ -190,11 +190,27 @@ This section pertains to [`config.json`](./config-example.json) and the settings
     ```
 
 - `ignore_comments`
-    - Set to `true` if you don't want to process comments for translation
+    - Set to `true` if you don't want to process comments for translation.
     - Default value: `false`
     - Example:
     ```json
     "ignore_comments": true
+    ```
+
+- `ignore_mentions`
+    - Set to `true` if you don't want to process on-demand translations via user mentions. Explicit mentions will be processed even if `ignore_comments` or `ignore_submissions` are enabled.
+    - Default value: `false`
+    - Example:
+    ```json
+    "ignore_mentions": false
+    ```
+
+- `mention_limit`
+    - The maximum number of historical mentions to process at a time. A higher value means higher API usage at bot startup, but means less chance for missed on-demand translation opportunities.
+    - Default value: 100
+    - Example:
+    ```json
+    "mention_limit": 100
     ```
 
 # wdmap.json
