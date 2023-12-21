@@ -33,45 +33,52 @@ One option is to use [**Git**](https://git-scm.com/) to clone the repository. Fo
 git clone https://github.com/codewario/DrProfessorsHandyTranslator.git dpht
 ```
 
-Or you can download the code archive for this repo and extract it to any folder on disk. Once you have these files downloaded you can continue with the initial setup and configuration of the bot.
+Or you can download the code archive for this repo and extract it to any folder on disk. Once you have these files downloaded you can continue with the [initial setup and configuration of the bot](#initial-setup-and-configuration).
 
 ## Initial setup and configuration
-If you want to run this in a Python venv, make sure it is created and activated before going through the rest of the setup steps below:
+If you want to run this in a [Python venv](https://docs.python.org/3/library/venv.html), make sure it is created and activated before going through the rest of the setup steps below:
 
 1. `cd` to this directory, and run `pip install -r requirements.txt` to install the bot's dependencies.
 2. Copy [`example.ini`](./example.ini) to `praw.ini`. Read the [PRAW.INI documentation](https://praw.readthedocs.io/en/stable/getting_started/configuration/prawini.html) to understand how to configure the PRAW client settings.
-   - It's also a good idea to limit who can read `praw.ini` to the user running the box, especially if you place your credentials there.
-   - On Windows you can change file ACLs this in the **Security** tab of the file's Properties dialog.
-   - On Linux or Mac OS, you can make sure only the user running the bot using these console commands (`sudo`` may be required as a prefix depending on the context):
-   ```bash
-   chown USERNAME:USERNAME praw.ini
-   chmod 600 praw.ini
-   ```
-
 3. Copy [`config-example.json`](./config-example.json) to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
-4. Assuming you are in this folder, run the bot with `python main.py`
+4. You can now run the bot with `python main.py`.
+
+### Securing `praw.ini`
+
+Since `praw.ini` may have your credentials in it, it's a good idea to limit who can read `praw.ini` to the user running the bot, especially if you place your credentials there:
+
+   - On Windows you can change file ACLs this in the **Security** tab of the file's Properties dialog.
+   - On Linux or Mac OS, you can ensure only the user running the bot using these console commands:
+   ```bash
+   # replace USERNAME with the username that will be running the bot
+   sudo chown USERNAME:USERNAME praw.ini
+   sudo chmod 600 praw.ini
+   ```
 
 ## Install as a service (optional)
 
-### Windows
+### Windows service
 
 While this is possible on Windows via the use of [NSSM](https://nssm.cc), I'm not familiar enough with the tool to be able to provide instructions at this time. Windows services must implement a Windows-service control interface (the CPython interpreter does not), which is why special tooling is required to run "non-services" as a service.
 
 As an alternative, you can use the Windows Task Scheduler to configure Python to run [`main.py`](./main.py) on boot or login.
 
-### Linux
+### Linux service
 
 Included in this repo is a `systemd` service template, [`dpht.service-template`](./dpht-template.service). It can be installed as a `systemd` service with the following steps (the `systemd` folder may be elsewhere on non-Debian-based distributions of Linux):
 
+> Note: It's recommended to install this under a subfolder of `/opt` if you plan to run as a service, as well as secure your [`praw.ini` from other users](#securing-prawini).
+
 1. Copy [`dpht-template.service`](./dpht-template.service) to `/etc/systemd/system/dpht.service`
 2. Edit the following fields in `dpht.service`:
-   - If you want to run the service as a user other than `root`, you can add the `User=USERNAME` field to the `[Service]` section.
-   - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
-   - `ExecStart`: Change the path to the `python` executable in this field in the following situations:
-      - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
-      - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
-      - If your system Python exists at a path other than `/usr/bin/python`
-      - In the situations above, `main.py` still needs to be the first parameter to `python` (else it will just start the interactive interpreter).
+    - If you want to run the service as a user other than `root`, you can add the `User=USERNAME` field to the `[Service]` section.
+        - If running as root, make sure the bot is installed to a location other users cannot write to.
+    - `WorkingDirectory`: This should be a path to the folder containing [`main.py`](./main.py)
+    - `ExecStart`: Change the path to the `python` executable in this field in the following situations:
+        - If you want to use an alternative Python installation and not the system-configured one, provide the path to that `python` executable here.
+        - If you want to use a venv'd Python instance, provide the path to the venv's `python` executable here.
+        - If your system Python exists at a path other than `/usr/bin/python`
+        - In the situations above, `main.py` still needs to be the first parameter to `python` (else it will just start the interactive interpreter).
 3. You can now control the `dpht` service with the `service` command (e.g. `service dpht start|stop|restart|status`). Enable the service to start on boot with `systemctl enable dpht`, or disable starting on boot with `systemctl disable dpht`.
 
 Example `dpht.service` which uses a venv'd Python instance:
@@ -96,7 +103,7 @@ WantedBy=multi-user.target
 ```
 
 
-### Mac OS
+### Mac OS service
 
 I have no idea how to configure `launchd`. Instructions/pull requests are welcome for this one :)
 

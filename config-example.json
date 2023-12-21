@@ -12,5 +12,7 @@
     "distinguish_reply": false,
     "sticky_reply": false,
     "ignore_submissions": false,
-    "ignore_comments": false
+    "ignore_comments": false,
+    "ignore_mentions": false,
+    "mention_limit": 100
 }
