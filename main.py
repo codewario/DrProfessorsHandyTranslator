@@ -360,15 +360,20 @@ def main():
                             break
 
                         # ensure we are up-to-date on replies
-                        comment.refresh()
-
-                        if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
-                            found_new = True
+                        try:
                             try:
-                                check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
-                                processed_ids.append(comment.fullname)
-                            except Exception as e:
-                                log.error(e, stack_info=True, exc_info=True)
+                                comment.refresh()
+                            except prawexceptions.ClientException:
+                                # https://github.com/praw-dev/praw/issues/838#issuecomment-325230667
+                                comment.refresh()
+
+                            if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
+                                found_new = True
+
+                            check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
+                            processed_ids.append(comment.fullname)
+                        except Exception as e:
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
 
