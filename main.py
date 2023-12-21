@@ -24,7 +24,7 @@ data = None
 wdmap = None
 
 
-def init_logging(data):
+def init_logging(data: dict):
     log_level = log.INFO
     if 'log_level' in data:
 
@@ -55,7 +55,7 @@ def init_logging(data):
     )
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum: int, frame):
     global exit_signaled
     global hup_received
 
@@ -75,7 +75,7 @@ def signal_handler(signum, frame):
         log.critical(message)
 
 
-def render_wd_map_code(mapcode, as_byte_string=False):
+def render_wd_map_code(mapcode: str, as_byte_string: bool = False) -> str:
     render = ''
     for code in mapcode.split('+'):
         render += rf"\u{code}"
@@ -85,7 +85,7 @@ def render_wd_map_code(mapcode, as_byte_string=False):
     return eval(render_cmd)
 
 
-def get_charmap_from_utfmap(utfmap):
+def get_charmap_from_utfmap(utfmap: dict) -> dict:
     # generate a character mapping from the decoded unicode mappings
     charmap = {}
     for wdcode in utfmap:
@@ -94,7 +94,7 @@ def get_charmap_from_utfmap(utfmap):
     return charmap
 
 
-def translate_text(text, charmap, flags=0, vs_chars=['\ufe0e', '\ufe0f']):
+def translate_text(text: str, charmap: dict, vs_chars=['\ufe0e', '\ufe0f']) -> str:
     # convert characters in text as defined in the character mapping
     if not text:
         return ''
@@ -112,32 +112,34 @@ def translate_text(text, charmap, flags=0, vs_chars=['\ufe0e', '\ufe0f']):
     return translated
 
 
-def remove_vs_chars(text, vs_chars=['\ufe0e', '\ufe0f']):
+def remove_vs_chars(text: str, vs_chars: list[str] = ['\ufe0e', '\ufe0f']) -> str:
     result = text
     for char in vs_chars:
         result = result.replace(char, '')
     return result
 
 
-def compile_charmap_expression(charmap, detect_threshold):
+def compile_charmap_expression(charmap: dict, detect_threshold: int) -> re.Pattern:
     # compile regex for character map detection
     char_str = u''.join(charmap.keys())
     expr = f"[{char_str}]{{{detect_threshold}}}"
     return re.compile(expr, flags=re.MULTILINE)
 
 
-def item_replied(reddit_username, item: [Comment, Submission]):
+def item_replied(reddit_username: str, item: [Comment, Submission]) -> bool:
     if isinstance(item, Submission):
         my_replies = [comment.author.name == reddit_username if comment.author else False for comment in item.comments]
         returner = any(my_replies)
         return returner
 
+    # if not a submission assume it's a comment
+    item.refresh()
     my_replies = [reply.author.name == reddit_username if reply.author else False for reply in item.replies]
     returner = any(my_replies)
     return returner
 
 
-def fetch_unprocessed_mentions(reddit: Reddit, username=None, limit=50):
+def fetch_unprocessed_comment_mentions(reddit: Reddit, username=None, limit: int = 50) -> list[str]:
     global processed_ids
 
     use_username = username if username else reddit.config.username
@@ -160,9 +162,6 @@ def fetch_unprocessed_mentions(reddit: Reddit, username=None, limit=50):
             # don't waste API calls if we know we processed the parent
             continue
 
-        if isinstance(parent, Comment):
-            parent.refresh()
-
         if item_replied(use_username, parent):
             # check that we haven't already replied in real time
             # if yes, add it to the known list
@@ -177,9 +176,9 @@ def fetch_unprocessed_mentions(reddit: Reddit, username=None, limit=50):
 def check_and_translate_item(
         item: [Comment, Submission],
         detect_pattern: re.Pattern,
-        charmap,
-        distinguish=False,
-        sticky=False):
+        charmap: dict,
+        distinguish: bool = False,
+        sticky: bool = False):
 
     global processed_ids
     is_post = isinstance(item, Submission)
@@ -222,7 +221,7 @@ def check_and_translate_item(
                 log.warning(f"Failed to distinguish {reddit_site}{result.permalink}: {e}")
 
 
-def init_reddit_client():
+def init_reddit_client() -> Reddit:
     reddit = Reddit('dpht')
 
     # Fix the extra quotes that reading from praw.ini adds to these
@@ -235,7 +234,7 @@ def init_reddit_client():
     return reddit
 
 
-def load_data_and_map(config_json_path, wdmap_json_path):
+def load_data_and_map(config_json_path: str, wdmap_json_path: str):
     global data
     global wdmap
 
@@ -248,7 +247,7 @@ def load_data_and_map(config_json_path, wdmap_json_path):
         wdmap = json.load(config)['unicode_to_char_map']
 
 
-def main():
+def main() -> int:
     load_data_and_map(config_json_path, wdmap_json_path)
 
     # variables from configs
@@ -342,6 +341,7 @@ def main():
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
                             except prawexceptions.PrawcoreException as e:
+                                log.error(f"Error processing submission: {submission.shortlink}")
                                 log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring submissions per configuration')
@@ -360,15 +360,13 @@ def main():
                         if comment is None:
                             break
 
-                        # ensure we are up-to-date on replies
-                        comment.refresh()
-
                         if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
                             found_new = True
                             try:
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
-                            except Exception as e:
+                            except prawexceptions.PrawcoreException as e:
+                                log.error(f"Error processing comment: {reddit_site}{comment.permalink}")
                                 log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
@@ -377,13 +375,13 @@ def main():
             if not ignore_mentions:
                 log.debug(f"Checking for new mentions of {username} (max {mention_limit})")
 
-                mentions = fetch_unprocessed_mentions(reddit, username, mention_limit)
+                mentions = fetch_unprocessed_comment_mentions(reddit, username, mention_limit)
                 for mention in mentions:
                     found_new = True
                     try:
                         check_and_translate_item(mention.parent(), wd_regex, charmap, distinguish_reply, sticky_reply)
                         processed_ids.extend([mention.fullname, mention.parent_id])
-                    except Exception as e:
+                    except prawexceptions.PrawcoreException as e:
                         log.error(e, stack_info=True, exc_info=True)
 
             if not found_new and not exit_signaled and not hup_received:
