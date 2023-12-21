@@ -27,7 +27,7 @@ This bot should be compatible with Windows, Mac OS, and Linux operating systems.
 # Setup and execution
 
 ### How to install
-One optionis to use [**Git**](https://git-scm.com/) to clone the repository. For example, to clone into a folder named `dpht`:
+One option is to use [**Git**](https://git-scm.com/) to clone the repository. For example, to clone into a folder named `dpht`:
 
 ```powershell
 git clone https://github.com/codewario/DrProfessorsHandyTranslator.git dpht
@@ -35,7 +35,7 @@ git clone https://github.com/codewario/DrProfessorsHandyTranslator.git dpht
 
 Or you can download the code archive for this repo and extract it to any folder on disk.
 
-If you want to run this in a Python venv, make sure it is created and activated before going through the steps below:
+If you want to run this in a Python venv, make sure it is created and activated before going through the rest of the setup steps below:
 
 1. `cd` to this directory, and run `pip install -r requirements.txt` to install the bot's dependencies.
 2. Copy [`example.ini`](./example.ini) to `praw.ini`. Read the [PRAW.INI documentation](https://praw.readthedocs.io/en/stable/getting_started/configuration/prawini.html) to understand how to configure the PRAW client settings.
