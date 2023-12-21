@@ -180,6 +180,7 @@ def check_and_translate_item(
         charmap,
         distinguish=False,
         sticky=False):
+
     global processed_ids
     is_post = isinstance(item, Submission)
 
@@ -243,7 +244,7 @@ def load_data_and_map(config_json_path, wdmap_json_path):
         data = json.load(config)
 
     # load character remap config
-    with open(wdmap_json_path, "r") as config:
+    with open(wdmap_json_path, "r", encoding='utf-16') as config:
         wdmap = json.load(config)['unicode_to_char_map']
 
 

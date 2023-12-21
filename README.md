@@ -263,6 +263,8 @@ Variation selectors should be omitted from `wdmap.json` definitions. The reasoni
 
 If desired, `wdmap.json` can be updated for translating additional character sets or the general substitution of characters in text, if someone wanted to use the bot in this way. It's not limited to Wingdings despite Wingdings translation being its purpose.
 
+`wdmap.json` is expected to be saved with the `UTF-16 Little-Endian (LE)` encoding.
+
 # ☜︎☠︎❄︎☼︎✡︎ ☠︎🕆︎💣︎👌︎☜︎☼︎ 💧︎☜︎✞︎☜︎☠︎❄︎☜︎☜︎☠︎
 
 👎︎✌︎☼︎😐︎ 👎︎✌︎☼︎😐︎☜︎☼︎ ✡︎☜︎❄︎ 👎︎✌︎☼︎😐︎☜︎☼︎
