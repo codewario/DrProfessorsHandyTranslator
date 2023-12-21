@@ -26,15 +26,16 @@ This bot should be compatible with Windows, Mac OS, and Linux operating systems.
 
 # Setup and execution
 
-### How to install
+## Obtain the files
 One option is to use [**Git**](https://git-scm.com/) to clone the repository. For example, to clone into a folder named `dpht`:
 
 ```powershell
 git clone https://github.com/codewario/DrProfessorsHandyTranslator.git dpht
 ```
 
-Or you can download the code archive for this repo and extract it to any folder on disk.
+Or you can download the code archive for this repo and extract it to any folder on disk. Once you have these files downloaded you can continue with the initial setup and configuration of the bot.
 
+## Initial setup and configuration
 If you want to run this in a Python venv, make sure it is created and activated before going through the rest of the setup steps below:
 
 1. `cd` to this directory, and run `pip install -r requirements.txt` to install the bot's dependencies.
@@ -50,9 +51,7 @@ If you want to run this in a Python venv, make sure it is created and activated 
 3. Copy [`config-example.json`](./config-example.json) to `config.json`, and update the list of subreddits. See [Configuration Settings](#configuration-settings) for more details on the bot configuration.
 4. Assuming you are in this folder, run the bot with `python main.py`
 
-## Install as a service
-
-> Note: Installing as a service is ***not*** a requirement. This is simply a "nice-to-have".
+## Install as a service (optional)
 
 ### Windows
 
