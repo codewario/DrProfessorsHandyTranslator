@@ -57,6 +57,8 @@ Since `praw.ini` may have your credentials in it, it's a good idea to limit who 
 
 ## Install as a service (optional)
 
+You may want to run this as a service for various reasons, such as having it start on boot or having it restart automatically in case it stops due to an error condition.
+
 ### Windows service
 
 While this is possible on Windows via the use of [NSSM](https://nssm.cc), I'm not familiar enough with the tool to be able to provide instructions at this time. Windows services must implement a Windows-service control interface (the CPython interpreter does not), which is why special tooling is required to run "non-services" as a service.
