@@ -133,7 +133,11 @@ def item_replied(reddit_username: str, item: [Comment, Submission]) -> bool:
         return returner
 
     # if not a submission assume it's a comment
-    item.refresh()
+    try:
+        item.refresh()
+    except prawexceptions.ClientException:
+        # See https://github.com/praw-dev/praw/issues/838#issuecomment-325230667
+        item.refresh()
     my_replies = [reply.author.name == reddit_username if reply.author else False for reply in item.replies]
     returner = any(my_replies)
     return returner
