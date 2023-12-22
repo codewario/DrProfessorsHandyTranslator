@@ -178,10 +178,11 @@ def check_and_translate_item(
         detect_pattern: re.Pattern,
         charmap: dict,
         distinguish: bool = False,
-        sticky: bool = False):
+        sticky: bool = False) -> Comment:
 
     global processed_ids
     is_post = isinstance(item, Submission)
+    returner = None
 
     title = remove_vs_chars(item.title) if is_post else ''
     text = remove_vs_chars(item.selftext if is_post else item.body)
@@ -219,6 +220,8 @@ def check_and_translate_item(
                 result.mod.distinguish(sticky=sticky)
             except prawexceptions.PrawcoreException as e:
                 log.warning(f"Failed to distinguish {reddit_site}{result.permalink}: {e}")
+        returner = result
+    return returner
 
 
 def init_reddit_client() -> Reddit:
@@ -378,9 +381,13 @@ def main() -> int:
                 mentions = fetch_unprocessed_comment_mentions(reddit, username, mention_limit)
                 for mention in mentions:
                     found_new = True
+
                     try:
-                        check_and_translate_item(mention.parent(), wd_regex, charmap, distinguish_reply, sticky_reply)
+                        response = check_and_translate_item(mention.parent(), wd_regex, charmap, distinguish_reply, sticky_reply)
                         processed_ids.extend([mention.fullname, mention.parent_id])
+                        if response:
+                            log.info(f"Responding to mentioner: {reddit_site}{mention.context}")
+                            mention.reply(f"[Translation available here]({reddit_site}{response.permalink})")
                     except prawexceptions.PrawcoreException as e:
                         log.error(e, stack_info=True, exc_info=True)
 
