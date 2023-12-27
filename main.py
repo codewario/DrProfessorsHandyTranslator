@@ -307,10 +307,7 @@ def main() -> int:
 
     init_logging(data)
 
-    for i in range(3):
-        log.info("================================================================================")
-
-    log.info('Starting the Dr. Professor''s Handy Translator')
+    log.info('''Starting the Dr. Professor's Handy Translator''')
     log.info(f"Current working directory: {os.getcwd()}")
 
     returner = 0
