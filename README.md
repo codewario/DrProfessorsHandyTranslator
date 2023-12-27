@@ -22,6 +22,10 @@ This bot requires Python 3.9 or later to run. May run on some earlier versions o
 
 The only third party package required is `praw`, which can be installed using `pip install praw`.
 
+If you plan on leveraging a Discord webhook for logging, you can install the `python-logging-discord-handler` package with `pip install python-logging-discord-handler`. However, this package is not required to be installed.
+
+You can install all required and optional packages with the command `pip install -r requirements.txt`
+
 This bot should be compatible with Windows, Mac OS, and Linux operating systems.
 
 # Setup and execution
@@ -236,6 +240,32 @@ This section pertains to [`config.json`](./config-example.json) and the settings
     - Example:
     ```json
     "mention_limit": 100
+    ```
+
+## Discord Logging Options
+
+These options require that the `python-logging-discord-handler` package be installed. Configuration of these settings without this package will be ignored.
+
+- `discord_log_webhook`
+    - Discord webhook URL to send log messages to. Do not configure to disable logging to Discord.
+    - Example:
+    ```json
+    "discord_log_webhook": "https://discord.com/api/webhooks/iamawebhookurl"
+    ```
+
+- `discord_log_name`
+    - Service (display) name to post to the webhook URL as.
+    - Default value: `Dr. Professor's Handy Translator`
+    - Example:
+    ```json
+    "discord_log_name": "dpht-logger"
+    ```
+
+- `discord_avatar_url`
+    - Optional URL to an image to use as the avatar when logging messages to the webhook URL.
+    - Example:
+    ```json
+    "discord_avatar_url": "https://url_to_some_image"
     ```
 
 # wdmap.json
