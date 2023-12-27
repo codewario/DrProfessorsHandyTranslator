@@ -1,1 +1,2 @@
 praw~=7.7.1
+python-logging-discord-handler~=0.1.4
