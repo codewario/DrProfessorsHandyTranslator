@@ -1,5 +1,6 @@
 from praw import Reddit
-from prawcore import exceptions as prawexceptions
+from praw import exceptions as prawexceptions
+from prawcore import exceptions as prawcoreexceptions
 from praw.models import Comment, Submission
 import re
 import json
@@ -222,7 +223,7 @@ def check_and_translate_item(
         if distinguish:
             try:
                 result.mod.distinguish(sticky=sticky)
-            except prawexceptions.PrawcoreException as e:
+            except prawcoreexceptions.PrawcoreException as e:
                 log.warning(f"Failed to distinguish {reddit_site}{result.permalink}: {e}")
         returner = result
     return returner
@@ -347,7 +348,7 @@ def main() -> int:
                             try:
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
-                            except prawexceptions.PrawcoreException as e:
+                            except prawcoreexceptions.PrawcoreException as e:
                                 log.error(f"Error processing submission: {submission.shortlink}")
                                 log.error(e, stack_info=True, exc_info=True)
                 else:
@@ -372,7 +373,7 @@ def main() -> int:
                             try:
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
-                            except prawexceptions.PrawcoreException as e:
+                            except prawcoreexceptions.PrawcoreException as e:
                                 log.error(f"Error processing comment: {reddit_site}{comment.permalink}")
                                 log.error(e, stack_info=True, exc_info=True)
                 else:
@@ -392,7 +393,7 @@ def main() -> int:
                         if response:
                             log.info(f"Responding to mentioner: {reddit_site}{mention.context}")
                             mention.reply(f"[Translation available here]({reddit_site}{response.permalink})")
-                    except prawexceptions.PrawcoreException as e:
+                    except prawcoreexceptions.PrawcoreException as e:
                         log.error(e, stack_info=True, exc_info=True)
 
             if not found_new and not exit_signaled and not hup_received:
