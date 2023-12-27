@@ -10,6 +10,11 @@ import signal
 from time import sleep
 from sys import platform
 
+try:
+    from discord_logging.handler import DiscordHandler
+except ImportError:
+    DiscordHandler = None
+
 # global variables
 script_dir = os.path.dirname(os.path.realpath(__file__))
 config_json_path = os.path.join(script_dir, 'config.json')
@@ -46,14 +51,41 @@ def init_logging(data: dict):
 
         log_path = data['log_path'] if 'log_path' in data else 'dpht.log'
 
+    log_format = '%(asctime)s | %(levelname)s | PID:%(process)d %(message)s'
+
+    # get root logger
+    rootlogger = log.getLogger()
+
+    # remove existing log handlers
+    while rootlogger.hasHandlers():
+        rootlogger.removeHandler(rootlogger.handlers[0])
+
+    # configure basic logger
     log.basicConfig(
         filename=log_path,
         filemode='w' if 'overwrite_log' in data and data['overwrite_log'] else 'a',
         encoding='utf-8',
         level=log_level,
-        format='%(asctime)s | %(levelname)s | PID:%(process)d %(message)s',
+        format=log_format,
         force=True
     )
+
+    # configure discord logger (if available and configured)
+    discord_webhook = data['discord_log_webhook'] if 'discord_log_webhook' in data else None
+    if DiscordHandler and discord_webhook:
+
+        name = data['discord_log_name'] if 'discord_log_name' in data else '''Dr. Professor's Handy Translator'''
+        avatar_url = data['discord_avatar_url'] if 'discord_avatar_url' in data else None
+        discord_handler = DiscordHandler(
+            name,
+            discord_webhook,
+            avatar_url=avatar_url
+        )
+
+        discord_format = log.Formatter('%(message)s')
+        discord_handler.setFormatter(discord_format)
+
+        rootlogger.addHandler(discord_handler)
 
 
 def signal_handler(signum: int, frame):
