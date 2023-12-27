@@ -343,14 +343,14 @@ def main() -> int:
                         if submission is None:
                             break
 
-                        if submission.id not in processed_ids and not item_replied(reddit.config.username, submission):
-                            found_new = True
-                            try:
+                        try:
+                            if submission.id not in processed_ids and not item_replied(reddit.config.username, submission):
+                                found_new = True
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
-                            except prawcoreexceptions.PrawcoreException as e:
-                                log.error(f"Error processing submission: {submission.shortlink}")
-                                log.error(e, stack_info=True, exc_info=True)
+                        except prawcoreexceptions.PrawcoreException as e:
+                            log.error(f"Error processing submission: {submission.shortlink}")
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring submissions per configuration')
 
@@ -368,14 +368,14 @@ def main() -> int:
                         if comment is None:
                             break
 
-                        if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
-                            found_new = True
-                            try:
+                        try:
+                            if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
+                                found_new = True
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
-                            except prawcoreexceptions.PrawcoreException as e:
-                                log.error(f"Error processing comment: {reddit_site}{comment.permalink}")
-                                log.error(e, stack_info=True, exc_info=True)
+                        except prawcoreexceptions.PrawcoreException as e:
+                            log.error(f"Error processing comment: {reddit_site}{comment.permalink}")
+                            log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
 
