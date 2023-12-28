@@ -199,10 +199,18 @@ def fetch_unprocessed_comment_mentions(reddit: Reddit, username=None, limit: int
             # don't waste API calls if we know we processed the parent
             continue
 
-        if item_replied(use_username, parent):
-            # check that we haven't already replied in real time
-            # if yes, add it to the known list
-            processed_ids.extend([parent.fullname, item.fullname])
+        try:
+            if item_replied(use_username, parent):
+                # check that we haven't already replied in real time
+                # if yes, add it to the known list
+                processed_ids.extend([parent.fullname, item.fullname])
+                continue
+        except prawexceptions.ClientException as e:
+            log.warning(f"Skipping comment due to client exception: {e}")
+        except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
+            # If we get an unexpected exception, log to error log and continue
+            log.error('Error encountered, skipping comment')
+            log.error(e, stack_info=True, exc_info=True)
             continue
 
         # if we haven't replied, go ahead and return this as a new one
@@ -377,8 +385,10 @@ def main() -> int:
                                 found_new = True
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
-                        except prawcoreexceptions.PrawcoreException as e:
-                            log.error(f"Error processing submission: {submission.shortlink}")
+                        except prawexceptions.ClientException as e:
+                            log.warning(f"Skipping comment due to client exception: {e}")
+                        except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
+                            log.error('Unexpected error processing submission')
                             log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring submissions per configuration')
@@ -402,8 +412,10 @@ def main() -> int:
                                 found_new = True
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
-                        except prawcoreexceptions.PrawcoreException as e:
-                            log.error(f"Error processing comment: {reddit_site}{comment.permalink}")
+                        except prawexceptions.ClientException as e:
+                            log.warning(f"Skipping comment due to client exception: {e}")
+                        except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
+                            log.error('Unexpected error processing comment')
                             log.error(e, stack_info=True, exc_info=True)
                 else:
                     log.debug('Ignoring comments per configuration')
@@ -422,7 +434,10 @@ def main() -> int:
                         if response:
                             log.info(f"Responding to mentioner: {reddit_site}{mention.context}")
                             mention.reply(f"[Translation available here]({reddit_site}{response.permalink})")
-                    except prawcoreexceptions.PrawcoreException as e:
+                    except prawexceptions.ClientException as e:
+                        log.warning(f"Skipping comment due to client exception: {e}")
+                    except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
+                        log.error('Unexpected error processing mention')
                         log.error(e, stack_info=True, exc_info=True)
 
             if not found_new and not exit_signaled and not hup_received:
