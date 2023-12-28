@@ -166,11 +166,18 @@ def item_replied(reddit_username: str, item: [Comment, Submission]) -> bool:
         return returner
 
     # if not a submission assume it's a comment
+    refreshed = False
     try:
         item.refresh()
+        refreshed = True
     except prawexceptions.ClientException:
         # See https://github.com/praw-dev/praw/issues/838#issuecomment-325230667
+        log.warning('ClientException while refreshing item. Another refresh attempt will be made.')
+
+    # If the refresh failed, try again. If it happens again let the caller handle it.
+    if not refreshed:
         item.refresh()
+
     my_replies = [reply.author.name == reddit_username if reply.author else False for reply in item.replies]
     returner = any(my_replies)
     return returner
