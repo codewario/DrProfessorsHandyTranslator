@@ -388,7 +388,7 @@ def main() -> int:
                             break
 
                         try:
-                            if submission.id not in processed_ids and not item_replied(reddit.config.username, submission):
+                            if submission.fullname not in processed_ids and not item_replied(reddit.config.username, submission):
                                 found_new = True
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
@@ -414,8 +414,11 @@ def main() -> int:
                         if comment is None:
                             break
 
+                        if comment.author == reddit.config.username:
+                            processed_ids.append(comment.fullname)
+
                         try:
-                            if comment.id not in processed_ids and not item_replied(reddit.config.username, comment):
+                            if comment.fullname not in processed_ids and not comment.author == reddit.config.username and not item_replied(reddit.config.username, comment):
                                 found_new = True
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
