@@ -213,7 +213,9 @@ def fetch_unprocessed_comment_mentions(reddit: Reddit, username=None, limit: int
                 processed_ids.extend([parent.fullname, item.fullname])
                 continue
         except prawexceptions.ClientException as e:
-            log.warning(f"Skipping comment due to client exception: {e}")
+            # when item.refresh() fails the second time, may be due to deleted/removed comments (this is just a guess)
+            # this gets rather noisy so keep in the debug log
+            log.debug(f"Skipping comment due to client exception: {e}")
         except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
             # If we get an unexpected exception, log to error log and continue
             log.error('Error encountered, skipping comment')
