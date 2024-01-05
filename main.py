@@ -395,7 +395,7 @@ def main() -> int:
                                 check_and_translate_item(submission, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(submission.fullname)
                         except prawexceptions.ClientException as e:
-                            log.warning(f"Skipping comment due to client exception: {e}")
+                            log.debug(f"Skipping comment due to client exception: {e}")
                         except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
                             log.error('Unexpected error processing submission')
                             log.error(e, stack_info=True, exc_info=True)
@@ -425,7 +425,7 @@ def main() -> int:
                                 check_and_translate_item(comment, wd_regex, charmap, distinguish_reply, sticky_reply)
                                 processed_ids.append(comment.fullname)
                         except prawexceptions.ClientException as e:
-                            log.warning(f"Skipping comment due to client exception: {e}")
+                            log.debug(f"Skipping comment due to client exception: {e}")
                         except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
                             log.error('Unexpected error processing comment')
                             log.error(e, stack_info=True, exc_info=True)
@@ -447,7 +447,7 @@ def main() -> int:
                             log.info(f"Responding to mentioner: {reddit_site}{mention.context}")
                             mention.reply(f"[Translation available here]({reddit_site}{response.permalink})")
                     except prawexceptions.ClientException as e:
-                        log.warning(f"Skipping comment due to client exception: {e}")
+                        log.debug(f"Skipping comment due to client exception: {e}")
                     except (prawexceptions.PRAWException, prawcoreexceptions.PrawcoreException) as e:
                         log.error('Unexpected error processing mention')
                         log.error(e, stack_info=True, exc_info=True)
